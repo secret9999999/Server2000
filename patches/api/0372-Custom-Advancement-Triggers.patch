@@ -1,0 +1,223 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Jake Potrebic <jake.m.potrebic@gmail.com>
+Date: Wed, 21 Apr 2021 23:55:51 -0700
+Subject: [PATCH] Custom Advancement Triggers
+
+
+diff --git a/src/main/java/io/papermc/paper/advancement/AdvancementManager.java b/src/main/java/io/papermc/paper/advancement/AdvancementManager.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..3abb23acc86c551b27a2d17f5205e438494b89dd
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/advancement/AdvancementManager.java
+@@ -0,0 +1,28 @@
++package io.papermc.paper.advancement;
++
++import io.papermc.paper.advancement.trigger.CustomAdvancementTrigger;
++import org.bukkit.NamespacedKey;
++import org.jetbrains.annotations.ApiStatus;
++import org.jetbrains.annotations.NotNull;
++
++import java.util.Map;
++
++@ApiStatus.NonExtendable
++public interface AdvancementManager {
++
++    /**
++     * Registers a custom trigger
++     *
++     * @param trigger
++     * @param <T>
++     * @return
++     */
++    @NotNull <T extends CustomAdvancementTrigger<D>, D> T registerCustomTrigger(@NotNull T trigger);
++
++    /**
++     * Get all custom triggers.
++     *
++     * @return an unmodifiable map of custom triggers
++     */
++    @NotNull Map<NamespacedKey, CustomAdvancementTrigger<?>> getCustomTriggers();
++}
+diff --git a/src/main/java/io/papermc/paper/advancement/trigger/CustomAdvancementTrigger.java b/src/main/java/io/papermc/paper/advancement/trigger/CustomAdvancementTrigger.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..4a78f89643aa4451abc404589a86deef5d9ad22b
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/advancement/trigger/CustomAdvancementTrigger.java
+@@ -0,0 +1,58 @@
++package io.papermc.paper.advancement.trigger;
++
++import com.google.common.base.Preconditions;
++import com.google.gson.Gson;
++import com.google.gson.GsonBuilder;
++import com.google.gson.JsonObject;
++import org.bukkit.Keyed;
++import org.bukkit.entity.Player;
++import org.jetbrains.annotations.ApiStatus;
++import org.jetbrains.annotations.NotNull;
++
++import java.lang.reflect.ParameterizedType;
++import java.lang.reflect.Type;
++import java.util.function.BiConsumer;
++import java.util.function.Predicate;
++
++/**
++ * Should be extended by all classes representing custom triggers.
++ *
++ * @param <D> a data holder class for information parsed from the advancement JSON
++ */
++public abstract class CustomAdvancementTrigger<D> implements Keyed {
++
++    private static final Gson GSON = new GsonBuilder().create();
++
++    @ApiStatus.Internal
++    BiConsumer<Player, Predicate<D>> triggerConsumer;
++    private final Type triggerInstanceType;
++
++    protected CustomAdvancementTrigger() {
++        Type superClass = this.getClass().getGenericSuperclass();
++        Preconditions.checkArgument(superClass instanceof ParameterizedType, "%s isn't a parameterized type", superClass);
++        this.triggerInstanceType = ((ParameterizedType) superClass).getActualTypeArguments()[0];
++    }
++
++    /**
++     * This is the conditions object of the advancement JSON. Can be overriden by custom trigger implementations.
++     * <p>
++     * Default implementation uses GSON's standard adapters to attempt to create the custom trigger.
++     *
++     * @param conditionsObject the conditions JSON object
++     * @return an instance of the data class
++     */
++    protected @NotNull D createInstance(@NotNull JsonObject conditionsObject) {
++        return GSON.fromJson(conditionsObject, this.triggerInstanceType);
++    }
++
++    /**
++     * Needs to be called to trigger the advancement at the
++     * end of some logic in the implementing class.
++     *
++     * @param player Player the advancement pertains to
++     * @param instancePredicate supplies the instance of the trigger
++     */
++    protected final void trigger(@NotNull Player player, @NotNull Predicate<D> instancePredicate) {
++        this.triggerConsumer.accept(player, instancePredicate);
++    }
++}
+diff --git a/src/main/java/io/papermc/paper/advancement/trigger/SimpleAdvancementTrigger.java b/src/main/java/io/papermc/paper/advancement/trigger/SimpleAdvancementTrigger.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..9bf8476a24086041c5aa719eb3b06bb917b0d7df
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/advancement/trigger/SimpleAdvancementTrigger.java
+@@ -0,0 +1,56 @@
++package io.papermc.paper.advancement.trigger;
++
++import com.google.gson.JsonObject;
++import org.bukkit.NamespacedKey;
++import org.bukkit.entity.Player;
++import org.jetbrains.annotations.NotNull;
++
++import java.util.Objects;
++
++/**
++ * Represents a trigger that doesn't take any extra information.
++ */
++public final class SimpleAdvancementTrigger extends CustomAdvancementTrigger<Object> {
++
++    private static final Object INSTANCE = new Object();
++
++    private final NamespacedKey key;
++
++    public SimpleAdvancementTrigger(@NotNull NamespacedKey key) {
++        this.key = key;
++    }
++
++    @Override
++    protected @NotNull Object createInstance(@NotNull JsonObject conditionsObject) {
++        return INSTANCE;
++    }
++
++    @Override
++    public @NotNull NamespacedKey getKey() {
++        return this.key;
++    }
++
++    public void trigger(@NotNull Player player) {
++        this.trigger(player, (ignored) -> true);
++    }
++
++    @Override
++    public boolean equals(Object o) {
++        if (this == o) return true;
++        if (o == null || getClass() != o.getClass()) return false;
++        SimpleAdvancementTrigger that = (SimpleAdvancementTrigger) o;
++        return this.key.equals(that.key);
++    }
++
++    @Override
++    public int hashCode() {
++        return Objects.hash(this.key);
++    }
++
++    @Override
++    public String toString() {
++        return "SimpleAdvancementTrigger{" +
++            "key=" + this.key +
++            '}';
++    }
++}
+diff --git a/src/main/java/org/bukkit/Bukkit.java b/src/main/java/org/bukkit/Bukkit.java
+index 944f9b87a11472ac6d7e328acc00bf09f899e648..b4b2c7e422e74c4c3af510c8bc3f9ab3b2dd66e8 100644
+--- a/src/main/java/org/bukkit/Bukkit.java
++++ b/src/main/java/org/bukkit/Bukkit.java
+@@ -13,6 +13,8 @@ import java.util.Set;
+ import java.util.UUID;
+ import java.util.function.Consumer;
+ import java.util.logging.Logger;
++
++import io.papermc.paper.advancement.AdvancementManager;
+ import org.bukkit.Warning.WarningState;
+ import org.bukkit.advancement.Advancement;
+ import org.bukkit.block.data.BlockData;
+@@ -2306,6 +2308,16 @@ public final class Bukkit {
+     public static @NotNull org.bukkit.potion.PotionBrewer getPotionBrewer() {
+         return server.getPotionBrewer();
+     }
++
++    /**
++     * Returns the {@link AdvancementManager}
++     *
++     * @return the advancements manager
++     */
++    @NotNull
++    public static AdvancementManager getAdvancementManager() {
++        return server.getAdvancementManager();
++    }
+     // Paper end
+ 
+     @NotNull
+diff --git a/src/main/java/org/bukkit/Server.java b/src/main/java/org/bukkit/Server.java
+index cca362e54d6ff4a5a1e60f85a7eb1b3d222d3d48..20a7891ba39722fd23b985966840099c79e3b33d 100644
+--- a/src/main/java/org/bukkit/Server.java
++++ b/src/main/java/org/bukkit/Server.java
+@@ -13,6 +13,8 @@ import java.util.Set;
+ import java.util.UUID;
+ import java.util.function.Consumer;
+ import java.util.logging.Logger;
++
++import io.papermc.paper.advancement.AdvancementManager;
+ import org.bukkit.Warning.WarningState;
+ import org.bukkit.advancement.Advancement;
+ import org.bukkit.block.data.BlockData;
+@@ -2002,5 +2004,13 @@ public interface Server extends PluginMessageRecipient, net.kyori.adventure.audi
+      * @return the potion brewer
+      */
+     @NotNull org.bukkit.potion.PotionBrewer getPotionBrewer();
++
++    /**
++     * Returns the {@link AdvancementManager}
++     *
++     * @return the advancements manager
++     */
++    @NotNull
++    AdvancementManager getAdvancementManager();
+     // Paper end
+ }

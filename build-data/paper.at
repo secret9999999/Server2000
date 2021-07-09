@@ -315,3 +315,8 @@ public-f net.minecraft.world.level.gameevent.vibrations.VibrationListener listen
 # Fix custom inventory holders
 public-f net.minecraft.world.inventory.AbstractContainerMenu dataSlots
 public-f net.minecraft.world.inventory.AbstractContainerMenu remoteDataSlots
+
+# Custom Advancement Triggers
+public net.minecraft.advancements.CriteriaTriggers register(Lnet.minecraft.advancements.CriterionTrigger;)Lnet.minecraft.advancements.CriterionTrigger;
+public net.minecraft.server.ServerResources DATA_RELOAD_INITIAL_TASK
+public net.minecraft.server.ServerResources resources
