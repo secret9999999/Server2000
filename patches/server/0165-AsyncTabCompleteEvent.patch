@@ -85,13 +85,13 @@ index e6db5d649d01c4952dc5e3bf08f9ce15afbd0963..7d66377a431a3aedfd1338664cba2b83
  
          return tabEvent.isCancelled() ? Collections.EMPTY_LIST : tabEvent.getCompletions();
 diff --git a/src/main/java/org/bukkit/craftbukkit/command/ConsoleCommandCompleter.java b/src/main/java/org/bukkit/craftbukkit/command/ConsoleCommandCompleter.java
-index b996fde481cebbbcce80a6c267591136db7cc0bc..e5af155d75f717d33c23e22ff8b96bb3ff87844d 100644
+index d0cedf11727d96714d7bda04095000554c563033..36cde08c5e27fa1429bf7cd482bd40bd41600682 100644
 --- a/src/main/java/org/bukkit/craftbukkit/command/ConsoleCommandCompleter.java
 +++ b/src/main/java/org/bukkit/craftbukkit/command/ConsoleCommandCompleter.java
-@@ -28,6 +28,39 @@ public class ConsoleCommandCompleter implements Completer {
+@@ -28,6 +28,38 @@ public class ConsoleCommandCompleter implements Completer {
      public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
          final CraftServer server = this.server.server;
-         final String buffer = line.line();
+         final String buffer = "/" + line.line();
 +        // Async Tab Complete
 +        com.destroystokyo.paper.event.server.AsyncTabCompleteEvent event;
 +        java.util.List<String> completions = new java.util.ArrayList<>();
@@ -124,7 +124,6 @@ index b996fde481cebbbcce80a6c267591136db7cc0bc..e5af155d75f717d33c23e22ff8b96bb3
 +            }
 +            return;
 +        }
-+
          // Paper end
          Waitable<List<String>> waitable = new Waitable<List<String>>() {
              @Override

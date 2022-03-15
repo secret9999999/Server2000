@@ -46,10 +46,10 @@ index a4070b59e261f0f1ac4beec47b11492f4724bf27..e0b1f0671d16ddddcb6725acd25a1d1d
      @Override
 diff --git a/src/main/java/io/papermc/paper/console/BrigadierCommandCompleter.java b/src/main/java/io/papermc/paper/console/BrigadierCommandCompleter.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..d3f80b5dcd366c5b8a48cb885d825d243b01ac4c
+index 0000000000000000000000000000000000000000..a56c1d4f904d3344836ce2d387b7b8529b224a51
 --- /dev/null
 +++ b/src/main/java/io/papermc/paper/console/BrigadierCommandCompleter.java
-@@ -0,0 +1,95 @@
+@@ -0,0 +1,87 @@
 +package io.papermc.paper.console;
 +
 +import com.destroystokyo.paper.event.server.AsyncTabCompleteEvent.Completion;
@@ -87,7 +87,7 @@ index 0000000000000000000000000000000000000000..d3f80b5dcd366c5b8a48cb885d825d24
 +            return;
 +        }
 +        final CommandDispatcher<CommandSourceStack> dispatcher = this.server.getCommands().getDispatcher();
-+        final ParseResults<CommandSourceStack> results = dispatcher.parse(prepareStringReader(line.line()), this.commandSourceStack);
++        final ParseResults<CommandSourceStack> results = dispatcher.parse(new StringReader(line.line()), this.commandSourceStack);
 +        this.addCandidates(
 +            candidates,
 +            dispatcher.getCompletionSuggestions(results, line.cursor()).join().getList(),
@@ -136,24 +136,17 @@ index 0000000000000000000000000000000000000000..d3f80b5dcd366c5b8a48cb885d825d24
 +        }
 +        return completion(suggestion.getText(), PaperAdventure.asAdventure(ComponentUtils.fromMessage(suggestion.getTooltip())));
 +    }
-+
-+    static @NonNull StringReader prepareStringReader(final @NonNull String line) {
-+        final StringReader stringReader = new StringReader(line);
-+        if (stringReader.canRead() && stringReader.peek() == '/') {
-+            stringReader.skip();
-+        }
-+        return stringReader;
-+    }
 +}
 diff --git a/src/main/java/io/papermc/paper/console/BrigadierCommandHighlighter.java b/src/main/java/io/papermc/paper/console/BrigadierCommandHighlighter.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..5ab8365b806dd035800ba9b449c9bc9233772d13
+index 0000000000000000000000000000000000000000..9d57a266837aa4c1297c5788460c5eaa32873f39
 --- /dev/null
 +++ b/src/main/java/io/papermc/paper/console/BrigadierCommandHighlighter.java
-@@ -0,0 +1,64 @@
+@@ -0,0 +1,61 @@
 +package io.papermc.paper.console;
 +
 +import com.mojang.brigadier.ParseResults;
++import com.mojang.brigadier.StringReader;
 +import com.mojang.brigadier.context.ParsedCommandNode;
 +import com.mojang.brigadier.tree.LiteralCommandNode;
 +import java.util.regex.Pattern;
@@ -179,12 +172,8 @@ index 0000000000000000000000000000000000000000..5ab8365b806dd035800ba9b449c9bc92
 +    @Override
 +    public AttributedString highlight(final @NonNull LineReader reader, final @NonNull String buffer) {
 +        final AttributedStringBuilder builder = new AttributedStringBuilder();
-+        final ParseResults<CommandSourceStack> results = this.server.getCommands().getDispatcher().parse(BrigadierCommandCompleter.prepareStringReader(buffer), this.commandSourceStack);
++        final ParseResults<CommandSourceStack> results = this.server.getCommands().getDispatcher().parse(new StringReader(buffer), this.commandSourceStack);
 +        int pos = 0;
-+        if (buffer.startsWith("/")) {
-+            builder.append("/", AttributedStyle.DEFAULT);
-+            pos = 1;
-+        }
 +        int component = -1;
 +        for (final ParsedCommandNode<CommandSourceStack> node : results.getContext().getLastChild().getNodes()) {
 +            if (node.getRange().getStart() >= buffer.length()) {
@@ -237,7 +226,7 @@ index e842e96fe566e89b37e38429c718318a2dd303f5..a97e4ac808ed746c5e6bbcbe90839beb
          com.destroystokyo.paper.VersionHistoryManager.INSTANCE.getClass(); // load version history now
          io.papermc.paper.util.ObfHelper.INSTANCE.getClass(); // load mappings for stacktrace deobf and etc.
 diff --git a/src/main/java/org/bukkit/craftbukkit/command/ConsoleCommandCompleter.java b/src/main/java/org/bukkit/craftbukkit/command/ConsoleCommandCompleter.java
-index 14cd8ae69d9b25dc5edad4ff96ff4a9acb1f22cb..b3484487fa8baa4d1dd6c595586fb26a01a2153d 100644
+index bfdd9833f9a18ddba349349cd21105324a25ddb9..23fb0f4c68642ee5c92d0f752fa576275a6bf7cb 100644
 --- a/src/main/java/org/bukkit/craftbukkit/command/ConsoleCommandCompleter.java
 +++ b/src/main/java/org/bukkit/craftbukkit/command/ConsoleCommandCompleter.java
 @@ -18,9 +18,11 @@ import org.bukkit.event.server.TabCompleteEvent;
@@ -268,8 +257,8 @@ index 14cd8ae69d9b25dc5edad4ff96ff4a9acb1f22cb..b3484487fa8baa4d1dd6c595586fb26a
 +            this.addCompletions(reader, line, candidates, completions);
              return;
          }
- 
-@@ -99,10 +102,12 @@ public class ConsoleCommandCompleter implements Completer {
+         // Paper end
+@@ -98,10 +101,12 @@ public class ConsoleCommandCompleter implements Completer {
          try {
              List<String> offers = waitable.get();
              if (offers == null) {
@@ -282,7 +271,7 @@ index 14cd8ae69d9b25dc5edad4ff96ff4a9acb1f22cb..b3484487fa8baa4d1dd6c595586fb26a
              for (String completion : offers) {
                  if (completion.isEmpty()) {
                      continue;
-@@ -110,6 +115,8 @@ public class ConsoleCommandCompleter implements Completer {
+@@ -109,6 +114,8 @@ public class ConsoleCommandCompleter implements Completer {
  
                  candidates.add(new Candidate(completion));
              }
@@ -291,7 +280,7 @@ index 14cd8ae69d9b25dc5edad4ff96ff4a9acb1f22cb..b3484487fa8baa4d1dd6c595586fb26a
              // Paper end
  
              // Paper start - JLine handles cursor now
-@@ -138,5 +145,9 @@ public class ConsoleCommandCompleter implements Completer {
+@@ -137,5 +144,9 @@ public class ConsoleCommandCompleter implements Completer {
          }
          return false;
      }
