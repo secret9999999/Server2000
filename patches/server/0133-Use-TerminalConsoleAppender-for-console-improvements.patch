@@ -341,7 +341,7 @@ index 76fb1ecd47cb86b50486effe8cc7fe4abf8e311c..21f889ddec72b40f5954eec07417e08d
 +    }*/ // Paper
  }
 diff --git a/src/main/java/org/bukkit/craftbukkit/command/ConsoleCommandCompleter.java b/src/main/java/org/bukkit/craftbukkit/command/ConsoleCommandCompleter.java
-index 0b4c62387c1093652ac15b64a8703249de4cf088..b996fde481cebbbcce80a6c267591136db7cc0bc 100644
+index 0b4c62387c1093652ac15b64a8703249de4cf088..d0cedf11727d96714d7bda04095000554c563033 100644
 --- a/src/main/java/org/bukkit/craftbukkit/command/ConsoleCommandCompleter.java
 +++ b/src/main/java/org/bukkit/craftbukkit/command/ConsoleCommandCompleter.java
 @@ -4,50 +4,73 @@ import java.util.Collections;
@@ -375,7 +375,7 @@ index 0b4c62387c1093652ac15b64a8703249de4cf088..b996fde481cebbbcce80a6c267591136
 -    public int complete(final String buffer, final int cursor, final List<CharSequence> candidates) {
 +    public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
 +        final CraftServer server = this.server.server;
-+        final String buffer = line.line();
++        final String buffer = "/" + line.line();
 +        // Paper end
          Waitable<List<String>> waitable = new Waitable<List<String>>() {
              @Override

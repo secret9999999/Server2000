@@ -46,12 +46,12 @@ index 36df32ae2edef09e6c544c4e93ef3e262aee5566..7f73b6b63edefcf7fd4f5c7f15558af8
              com.destroystokyo.paper.event.brigadier.AsyncPlayerSendSuggestionsEvent suggestEvent = new com.destroystokyo.paper.event.brigadier.AsyncPlayerSendSuggestionsEvent(this.getCraftPlayer(), suggestions, buffer);
              suggestEvent.setCancelled(suggestions.isEmpty());
 diff --git a/src/main/java/org/bukkit/craftbukkit/command/ConsoleCommandCompleter.java b/src/main/java/org/bukkit/craftbukkit/command/ConsoleCommandCompleter.java
-index e5af155d75f717d33c23e22ff8b96bb3ff87844d..14cd8ae69d9b25dc5edad4ff96ff4a9acb1f22cb 100644
+index 36cde08c5e27fa1429bf7cd482bd40bd41600682..bfdd9833f9a18ddba349349cd21105324a25ddb9 100644
 --- a/src/main/java/org/bukkit/craftbukkit/command/ConsoleCommandCompleter.java
 +++ b/src/main/java/org/bukkit/craftbukkit/command/ConsoleCommandCompleter.java
 @@ -29,34 +29,56 @@ public class ConsoleCommandCompleter implements Completer {
          final CraftServer server = this.server.server;
-         final String buffer = line.line();
+         final String buffer = "/" + line.line();
          // Async Tab Complete
 -        com.destroystokyo.paper.event.server.AsyncTabCompleteEvent event;
 -        java.util.List<String> completions = new java.util.ArrayList<>();
@@ -115,7 +115,7 @@ index e5af155d75f717d33c23e22ff8b96bb3ff87844d..14cd8ae69d9b25dc5edad4ff96ff4a9a
              }
              return;
          }
-@@ -106,4 +128,15 @@ public class ConsoleCommandCompleter implements Completer {
+@@ -105,4 +127,15 @@ public class ConsoleCommandCompleter implements Completer {
              Thread.currentThread().interrupt();
          }
      }
