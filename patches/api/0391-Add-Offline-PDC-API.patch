@@ -5,7 +5,7 @@ Subject: [PATCH] Add Offline PDC API
 
 
 diff --git a/src/main/java/org/bukkit/OfflinePlayer.java b/src/main/java/org/bukkit/OfflinePlayer.java
-index a7d1f1e701f23e851f735584a30bedadb0d8b9bd..282b8bfc7e0b3ce38dca1a2554f9be9bf5a3d5f7 100644
+index a7d1f1e701f23e851f735584a30bedadb0d8b9bd..1720f73a9ceaaf6ac3aa9b0d2439379b60260690 100644
 --- a/src/main/java/org/bukkit/OfflinePlayer.java
 +++ b/src/main/java/org/bukkit/OfflinePlayer.java
 @@ -10,7 +10,7 @@ import org.bukkit.profile.PlayerProfile;
@@ -17,13 +17,15 @@ index a7d1f1e701f23e851f735584a30bedadb0d8b9bd..282b8bfc7e0b3ce38dca1a2554f9be9b
  
      /**
       * Checks if this player is currently online
-@@ -203,6 +203,18 @@ public interface OfflinePlayer extends ServerOperator, AnimalTamer, Configuratio
+@@ -203,6 +203,20 @@ public interface OfflinePlayer extends ServerOperator, AnimalTamer, Configuratio
       * @return last seen time
       */
      public long getLastSeen();
 +
 +    /**
 +     * Returns a custom tag container capable of storing tags on the object.
++     *
++     * This offline implementation will re-save the data for each mutable methods.
 +     *
 +     * Note that the tags stored on this container are all stored under their
 +     * own custom namespace therefore modifying default tags using this

@@ -1,0 +1,110 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Lulu13022002 <41980282+Lulu13022002@users.noreply.github.com>
+Date: Sat, 9 Jul 2022 17:28:42 +0200
+Subject: [PATCH] Add Offline PDC API
+
+
+diff --git a/src/main/java/net/minecraft/world/level/storage/PlayerDataStorage.java b/src/main/java/net/minecraft/world/level/storage/PlayerDataStorage.java
+index 601f8099f74e81c17600566b3c9b7a6dd39c9bcb..2c33a70d007a641d0ad99881d324695dcf1581de 100644
+--- a/src/main/java/net/minecraft/world/level/storage/PlayerDataStorage.java
++++ b/src/main/java/net/minecraft/world/level/storage/PlayerDataStorage.java
+@@ -32,21 +32,29 @@ public class PlayerDataStorage {
+     }
+ 
+     public void save(Player player) {
++        // Paper start
++        CompoundTag nbttagcompound = player.saveWithoutId(new CompoundTag());
++        save(player.getUUID(), nbttagcompound, player);
++    }
++    public void save(java.util.UUID uuid, CompoundTag tag, @Nullable Player player) {
+         if (org.spigotmc.SpigotConfig.disablePlayerDataSaving) return; // Spigot
+         try {
+-            CompoundTag nbttagcompound = player.saveWithoutId(new CompoundTag());
+-            File file = File.createTempFile(player.getStringUUID() + "-", ".dat", this.playerDir);
++            File file = File.createTempFile(uuid + "-", ".dat", this.playerDir);
+ 
+-            NbtIo.writeCompressed(nbttagcompound, file);
+-            File file1 = new File(this.playerDir, player.getStringUUID() + ".dat");
+-            File file2 = new File(this.playerDir, player.getStringUUID() + ".dat_old");
++            NbtIo.writeCompressed(tag, file);
++            File file1 = new File(this.playerDir, uuid + ".dat");
++            File file2 = new File(this.playerDir, uuid + ".dat_old");
+ 
+             Util.safeReplaceFile(file1, file, file2);
+         } catch (Exception exception) {
+-            PlayerDataStorage.LOGGER.warn("Failed to save player data for {}", player.getScoreboardName(), exception); // Paper
++            if (player == null) {
++                PlayerDataStorage.LOGGER.warn("Failed to save offline player data for {}", uuid, exception); // Paper
++            } else {
++                PlayerDataStorage.LOGGER.warn("Failed to save player data for {}", player.getScoreboardName(), exception); // Paper
++            }
+         }
+-
+     }
++    // Paper end
+ 
+     @Nullable
+     public CompoundTag load(Player player) {
+diff --git a/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java b/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
+index 6d2ba650f53de8a460857f1846401a20b50cc43c..18491f4e358fd7b47a6ad2f345911d166c35b279 100644
+--- a/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
++++ b/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
+@@ -304,6 +304,58 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
+ 
+         return result;
+     }
++
++    @Override
++    public org.bukkit.persistence.PersistentDataContainer getPersistentDataContainer() {
++        Player player = getPlayer();
++        if (player != null) return player.getPersistentDataContainer();
++
++        CompoundTag data = getData();
++        boolean hasData = data != null;
++        if (data == null) {
++            data = new CompoundTag();
++        }
++
++        final CompoundTag finalData = data;
++        org.bukkit.craftbukkit.persistence.CraftPersistentDataContainer pdc = new org.bukkit.craftbukkit.persistence.CraftPersistentDataContainer(org.bukkit.craftbukkit.entity.CraftEntity.DATA_TYPE_REGISTRY) {
++
++            private void save() {
++                if (!isEmpty()) {
++                    finalData.put("BukkitValues", toTagCompound());
++                } else {
++                    finalData.remove("BukkitValues");
++                }
++                storage.save(getUniqueId(), finalData, null);
++            }
++
++            @Override
++            public <T, Z> void set(org.bukkit.NamespacedKey key, org.bukkit.persistence.PersistentDataType<T, Z> type, Z value) {
++                super.set(key, type, value);
++                save();
++            }
++
++            @Override
++            public void remove(org.bukkit.NamespacedKey key) {
++                super.remove(key);
++                save();
++            }
++
++            @Override
++            public void clear() {
++                super.clear();
++                save();
++            }
++        };
++
++        if (hasData) {
++            net.minecraft.nbt.Tag base = data.get("BukkitValues");
++            if (base instanceof CompoundTag compound) {
++                pdc.putAll(compound);
++            }
++        }
++
++        return pdc;
++    }
+     // Paper end
+ 
+     @Override
