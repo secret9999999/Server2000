@@ -4,11 +4,38 @@ Date: Sat, 9 Jul 2022 17:28:42 +0200
 Subject: [PATCH] Add Offline PDC API
 
 
+diff --git a/src/main/java/net/minecraft/world/level/storage/PlayerDataStorage.java b/src/main/java/net/minecraft/world/level/storage/PlayerDataStorage.java
+index 601f8099f74e81c17600566b3c9b7a6dd39c9bcb..bf7c29c481539d796521de725e17a58955410866 100644
+--- a/src/main/java/net/minecraft/world/level/storage/PlayerDataStorage.java
++++ b/src/main/java/net/minecraft/world/level/storage/PlayerDataStorage.java
+@@ -47,6 +47,22 @@ public class PlayerDataStorage {
+         }
+ 
+     }
++    // Paper start
++    public void save(java.util.UUID uuid, CompoundTag tag) {
++        if (org.spigotmc.SpigotConfig.disablePlayerDataSaving) return; // Spigot
++        try {
++            File file = File.createTempFile(uuid + "-", ".dat", this.playerDir);
++
++            NbtIo.writeCompressed(tag, file);
++            File file1 = new File(this.playerDir, uuid + ".dat");
++            File file2 = new File(this.playerDir, uuid + ".dat_old");
++
++            Util.safeReplaceFile(file1, file, file2);
++        } catch (Exception exception) {
++            PlayerDataStorage.LOGGER.warn("Failed to save offline player data for {}", uuid, exception); // Paper
++        }
++    }
++    // Paper end
+ 
+     @Nullable
+     public CompoundTag load(Player player) {
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java b/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
-index 6d2ba650f53de8a460857f1846401a20b50cc43c..0088dbc52bdaae82f46a8896d5b7563dede21f47 100644
+index 6d2ba650f53de8a460857f1846401a20b50cc43c..527e602ed47d11442b57eefbf3566b7793aa36db 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
-@@ -304,6 +304,45 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
+@@ -304,6 +304,48 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
  
          return result;
      }
@@ -26,7 +53,10 @@ index 6d2ba650f53de8a460857f1846401a20b50cc43c..0088dbc52bdaae82f46a8896d5b7563d
 +            private void save() {
 +                if (!isEmpty()) {
 +                    result.put("BukkitValues", toTagCompound());
++                } else {
++                    result.remove("BukkitValues");
 +                }
++                storage.save(getUniqueId(), result);
 +            }
 +
 +            @Override
