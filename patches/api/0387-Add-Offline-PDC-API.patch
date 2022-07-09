@@ -1,0 +1,38 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Lulu13022002 <41980282+Lulu13022002@users.noreply.github.com>
+Date: Sat, 9 Jul 2022 17:17:04 +0200
+Subject: [PATCH] Add Offline PDC API
+
+
+diff --git a/src/main/java/org/bukkit/OfflinePlayer.java b/src/main/java/org/bukkit/OfflinePlayer.java
+index a7d1f1e701f23e851f735584a30bedadb0d8b9bd..282b8bfc7e0b3ce38dca1a2554f9be9bf5a3d5f7 100644
+--- a/src/main/java/org/bukkit/OfflinePlayer.java
++++ b/src/main/java/org/bukkit/OfflinePlayer.java
+@@ -10,7 +10,7 @@ import org.bukkit.profile.PlayerProfile;
+ import org.jetbrains.annotations.NotNull;
+ import org.jetbrains.annotations.Nullable;
+ 
+-public interface OfflinePlayer extends ServerOperator, AnimalTamer, ConfigurationSerializable {
++public interface OfflinePlayer extends ServerOperator, AnimalTamer, ConfigurationSerializable, org.bukkit.persistence.PersistentDataHolder { // Paper - add pdc
+ 
+     /**
+      * Checks if this player is currently online
+@@ -203,6 +203,18 @@ public interface OfflinePlayer extends ServerOperator, AnimalTamer, Configuratio
+      * @return last seen time
+      */
+     public long getLastSeen();
++
++    /**
++     * Returns a custom tag container capable of storing tags on the object.
++     *
++     * Note that the tags stored on this container are all stored under their
++     * own custom namespace therefore modifying default tags using this
++     * {@link org.bukkit.persistence.PersistentDataHolder} is impossible.
++     *
++     * @return the persistent metadata container
++     */
++    @NotNull
++    org.bukkit.persistence.PersistentDataContainer getPersistentDataContainer();
+     // Paper end
+ 
+     /**
