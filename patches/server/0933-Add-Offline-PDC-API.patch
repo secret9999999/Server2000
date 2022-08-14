@@ -4,11 +4,38 @@ Date: Sat, 9 Jul 2022 17:28:42 +0200
 Subject: [PATCH] Add Offline PDC API
 
 
+diff --git a/src/main/java/io/papermc/paper/persistence/CraftCloseablePersistentDataContainer.java b/src/main/java/io/papermc/paper/persistence/CraftCloseablePersistentDataContainer.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..4ad662d1a16ab318e11afe734fc6e153943f7d15
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/persistence/CraftCloseablePersistentDataContainer.java
+@@ -0,0 +1,21 @@
++package io.papermc.paper.persistence;
++
++import net.minecraft.nbt.Tag;
++import org.bukkit.craftbukkit.persistence.CraftPersistentDataContainer;
++import org.bukkit.craftbukkit.persistence.CraftPersistentDataTypeRegistry;
++
++import java.util.Map;
++
++public class CraftCloseablePersistentDataContainer extends CraftPersistentDataContainer implements CloseablePersistentDataContainer {
++
++    public CraftCloseablePersistentDataContainer(Map<String, Tag> customTags, CraftPersistentDataTypeRegistry registry) {
++        super(customTags, registry);
++    }
++
++    public CraftCloseablePersistentDataContainer(CraftPersistentDataTypeRegistry registry) {
++        super(registry);
++    }
++
++    @Override
++    public void close() {}
++}
 diff --git a/src/main/java/net/minecraft/world/level/storage/PlayerDataStorage.java b/src/main/java/net/minecraft/world/level/storage/PlayerDataStorage.java
-index 601f8099f74e81c17600566b3c9b7a6dd39c9bcb..2c33a70d007a641d0ad99881d324695dcf1581de 100644
+index 601f8099f74e81c17600566b3c9b7a6dd39c9bcb..964605595190176d79d2811327f38b6071fdaff7 100644
 --- a/src/main/java/net/minecraft/world/level/storage/PlayerDataStorage.java
 +++ b/src/main/java/net/minecraft/world/level/storage/PlayerDataStorage.java
-@@ -32,21 +32,29 @@ public class PlayerDataStorage {
+@@ -32,18 +32,31 @@ public class PlayerDataStorage {
      }
  
      public void save(Player player) {
@@ -16,83 +43,61 @@ index 601f8099f74e81c17600566b3c9b7a6dd39c9bcb..2c33a70d007a641d0ad99881d324695d
 +        CompoundTag nbttagcompound = player.saveWithoutId(new CompoundTag());
 +        save(player.getUUID(), nbttagcompound, player);
 +    }
-+    public void save(java.util.UUID uuid, CompoundTag tag, @Nullable Player player) {
++    public void save(java.util.UUID uuid, CompoundTag nbttagcompound, @Nullable Player player) {
++        // Paper end
          if (org.spigotmc.SpigotConfig.disablePlayerDataSaving) return; // Spigot
          try {
 -            CompoundTag nbttagcompound = player.saveWithoutId(new CompoundTag());
 -            File file = File.createTempFile(player.getStringUUID() + "-", ".dat", this.playerDir);
-+            File file = File.createTempFile(uuid + "-", ".dat", this.playerDir);
++            File file = File.createTempFile(uuid + "-", ".dat", this.playerDir); // Paper
  
--            NbtIo.writeCompressed(nbttagcompound, file);
+             NbtIo.writeCompressed(nbttagcompound, file);
 -            File file1 = new File(this.playerDir, player.getStringUUID() + ".dat");
 -            File file2 = new File(this.playerDir, player.getStringUUID() + ".dat_old");
-+            NbtIo.writeCompressed(tag, file);
++            // Paper start
 +            File file1 = new File(this.playerDir, uuid + ".dat");
 +            File file2 = new File(this.playerDir, uuid + ".dat_old");
++            // Paper end
  
              Util.safeReplaceFile(file1, file, file2);
          } catch (Exception exception) {
--            PlayerDataStorage.LOGGER.warn("Failed to save player data for {}", player.getScoreboardName(), exception); // Paper
++            // Paper start
 +            if (player == null) {
-+                PlayerDataStorage.LOGGER.warn("Failed to save offline player data for {}", uuid, exception); // Paper
++                PlayerDataStorage.LOGGER.warn("Failed to save offline player data for {}", uuid, exception);
 +            } else {
-+                PlayerDataStorage.LOGGER.warn("Failed to save player data for {}", player.getScoreboardName(), exception); // Paper
+             PlayerDataStorage.LOGGER.warn("Failed to save player data for {}", player.getScoreboardName(), exception); // Paper
 +            }
++            // Paper end
          }
--
-     }
-+    // Paper end
  
-     @Nullable
-     public CompoundTag load(Player player) {
+     }
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java b/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
-index 6d2ba650f53de8a460857f1846401a20b50cc43c..18491f4e358fd7b47a6ad2f345911d166c35b279 100644
+index 6d2ba650f53de8a460857f1846401a20b50cc43c..319e83b8c410f2585546ddbcde96c4940c62f5f2 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
-@@ -304,6 +304,58 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
+@@ -304,6 +304,37 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
  
          return result;
      }
 +
 +    @Override
-+    public org.bukkit.persistence.PersistentDataContainer getPersistentDataContainer() {
-+        Player player = getPlayer();
-+        if (player != null) return player.getPersistentDataContainer();
-+
++    public io.papermc.paper.persistence.CloseablePersistentDataContainer getPersistentDataContainer() {
 +        CompoundTag data = getData();
 +        boolean hasData = data != null;
-+        if (data == null) {
-+            data = new CompoundTag();
-+        }
 +
-+        final CompoundTag finalData = data;
-+        org.bukkit.craftbukkit.persistence.CraftPersistentDataContainer pdc = new org.bukkit.craftbukkit.persistence.CraftPersistentDataContainer(org.bukkit.craftbukkit.entity.CraftEntity.DATA_TYPE_REGISTRY) {
++        io.papermc.paper.persistence.CraftCloseablePersistentDataContainer pdc = new io.papermc.paper.persistence.CraftCloseablePersistentDataContainer(org.bukkit.craftbukkit.entity.CraftEntity.DATA_TYPE_REGISTRY) {
 +
-+            private void save() {
-+                if (!isEmpty()) {
-+                    finalData.put("BukkitValues", toTagCompound());
-+                } else {
-+                    finalData.remove("BukkitValues");
++            @Override
++            public void close() {
++                if (!hasData) {
++                    throw new IllegalStateException("Cannot save persistent data into this container for player that has never join the server before. This is usually a bad usage and should be replaced by runtime default value !");
 +                }
-+                storage.save(getUniqueId(), finalData, null);
-+            }
-+
-+            @Override
-+            public <T, Z> void set(org.bukkit.NamespacedKey key, org.bukkit.persistence.PersistentDataType<T, Z> type, Z value) {
-+                super.set(key, type, value);
-+                save();
-+            }
-+
-+            @Override
-+            public void remove(org.bukkit.NamespacedKey key) {
-+                super.remove(key);
-+                save();
-+            }
-+
-+            @Override
-+            public void clear() {
-+                super.clear();
-+                save();
++                if (!isEmpty()) {
++                    data.put("BukkitValues", toTagCompound());
++                } else {
++                    data.remove("BukkitValues");
++                }
++                storage.save(getUniqueId(), data, null);
 +            }
 +        };
 +
