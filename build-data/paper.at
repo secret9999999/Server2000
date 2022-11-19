@@ -360,3 +360,5 @@ public net.minecraft.world.entity.projectile.Projectile leftOwner
 # Teleport API
 public net.minecraft.server.network.ServerGamePacketListenerImpl internalTeleport(DDDFFLjava/util/Set;Z)V
 
+# Add Offline PDC API
+public org.bukkit.craftbukkit.entity.CraftEntity DATA_TYPE_REGISTRY

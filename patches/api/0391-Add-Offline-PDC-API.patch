@@ -1,0 +1,68 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Lulu13022002 <41980282+Lulu13022002@users.noreply.github.com>
+Date: Sat, 9 Jul 2022 17:17:04 +0200
+Subject: [PATCH] Add Offline PDC API
+
+
+diff --git a/src/main/java/io/papermc/paper/persistence/CloseablePersistentDataContainer.java b/src/main/java/io/papermc/paper/persistence/CloseablePersistentDataContainer.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..67a4bc7bfe1d080c0b7d6562aea8589cd322423d
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/persistence/CloseablePersistentDataContainer.java
+@@ -0,0 +1,16 @@
++package io.papermc.paper.persistence;
++
++import org.bukkit.persistence.PersistentDataContainer;
++
++/**
++ * A {@link AutoCloseable} Persistent Data Container
++ */
++public interface CloseablePersistentDataContainer extends PersistentDataContainer, AutoCloseable {
++
++    /**
++     * Save the remaining data directly into the disk.
++     * Should be called at least one time after the changes to avoid data loss.
++     * @throws IllegalStateException If you save data for player that has never join the server before
++     */
++    void close();
++}
+diff --git a/src/main/java/org/bukkit/OfflinePlayer.java b/src/main/java/org/bukkit/OfflinePlayer.java
+index a7d1f1e701f23e851f735584a30bedadb0d8b9bd..09e62320d5d2573bcfa4fc62eb6f5fe0878261db 100644
+--- a/src/main/java/org/bukkit/OfflinePlayer.java
++++ b/src/main/java/org/bukkit/OfflinePlayer.java
+@@ -10,7 +10,7 @@ import org.bukkit.profile.PlayerProfile;
+ import org.jetbrains.annotations.NotNull;
+ import org.jetbrains.annotations.Nullable;
+ 
+-public interface OfflinePlayer extends ServerOperator, AnimalTamer, ConfigurationSerializable {
++public interface OfflinePlayer extends ServerOperator, AnimalTamer, ConfigurationSerializable, org.bukkit.persistence.PersistentDataHolder { // Paper - add pdc
+ 
+     /**
+      * Checks if this player is currently online
+@@ -203,6 +203,26 @@ public interface OfflinePlayer extends ServerOperator, AnimalTamer, Configuratio
+      * @return last seen time
+      */
+     public long getLastSeen();
++
++    /**
++     * Returns a custom tag container capable of storing tags on the object.
++     *
++     * <p>
++     * The offline implementation must be cast into a
++     * {@link io.papermc.paper.persistence.CloseablePersistentDataContainer CloseablePersistentDataContainer}
++     * and then closed in order to save the remaining data.
++     * Saving data for player that has never joined the server before is not supported.
++     * If the container is closed it will then throw an exception.
++     *
++     * <p>
++     * Note that the tags stored on this container are all stored under their
++     * own custom namespace therefore modifying default tags using this
++     * {@link org.bukkit.persistence.PersistentDataHolder PersistentDataHolder} is impossible.
++     *
++     * @return the persistent metadata container
++     */
++    @NotNull
++    org.bukkit.persistence.PersistentDataContainer getPersistentDataContainer();
+     // Paper end
+ 
+     /**
