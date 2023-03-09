@@ -70,7 +70,7 @@ index 0000000000000000000000000000000000000000..58f78d5e91beacaf710f62461cf869f7
 +
 +}
 diff --git a/src/main/java/org/bukkit/Bukkit.java b/src/main/java/org/bukkit/Bukkit.java
-index 149c1a1cc39f79ca03e1f02cf2751885e0428895..4d8ff5b400a17fadefc25b3bf602eadb12cae4e9 100644
+index 149c1a1cc39f79ca03e1f02cf2751885e0428895..30864584942415a42caa9d26de12a859456a0da2 100644
 --- a/src/main/java/org/bukkit/Bukkit.java
 +++ b/src/main/java/org/bukkit/Bukkit.java
 @@ -327,9 +327,11 @@ public final class Bukkit {
@@ -81,7 +81,7 @@ index 149c1a1cc39f79ca03e1f02cf2751885e0428895..4d8ff5b400a17fadefc25b3bf602eadb
       * @return the manager
       */
      @NotNull
-+    @Deprecated(forRemoval = true)
++    @Deprecated(forRemoval = true, since = "1.20")
      public static DataPackManager getDataPackManager() {
          return server.getDataPackManager();
      }
@@ -100,8 +100,20 @@ index 149c1a1cc39f79ca03e1f02cf2751885e0428895..4d8ff5b400a17fadefc25b3bf602eadb
      // Paper end
  
      @NotNull
+diff --git a/src/main/java/org/bukkit/Material.java b/src/main/java/org/bukkit/Material.java
+index 9050d986b75482b5884a206f0980d1a23680001c..0d59a412ca47d922bb3386c7c16eae029c33fbdc 100644
+--- a/src/main/java/org/bukkit/Material.java
++++ b/src/main/java/org/bukkit/Material.java
+@@ -5565,6 +5565,7 @@ public enum Material implements Keyed, Translatable, net.kyori.adventure.transla
+      * @param world the world to check
+      * @return true if this material can be used in this World.
+      */
++    @Deprecated(forRemoval = true, since = "1.20") // Paper
+     public boolean isEnabledByFeature(@NotNull World world) {
+         if (isItem()) {
+             return Bukkit.getDataPackManager().isEnabledByFeature(asItemType(), world);
 diff --git a/src/main/java/org/bukkit/Server.java b/src/main/java/org/bukkit/Server.java
-index 0c71aa3b5758dbfdce8782e02772f9450901adbd..2fa562ca863810cbba82d43bf452f61d9e02cfdb 100644
+index 0c71aa3b5758dbfdce8782e02772f9450901adbd..4a735cbe82eb02782452750823eca848613b6c8e 100644
 --- a/src/main/java/org/bukkit/Server.java
 +++ b/src/main/java/org/bukkit/Server.java
 @@ -266,9 +266,11 @@ public interface Server extends PluginMessageRecipient, net.kyori.adventure.audi
@@ -112,7 +124,7 @@ index 0c71aa3b5758dbfdce8782e02772f9450901adbd..2fa562ca863810cbba82d43bf452f61d
       * @return the manager
       */
      @NotNull
-+    @Deprecated(forRemoval = true) // Paper
++    @Deprecated(forRemoval = true, since = "1.20") // Paper
      public DataPackManager getDataPackManager();
  
      /**
@@ -128,8 +140,20 @@ index 0c71aa3b5758dbfdce8782e02772f9450901adbd..2fa562ca863810cbba82d43bf452f61d
 +    io.papermc.paper.datapack.DatapackManager getDatapackManager();
      // Paper end
  }
+diff --git a/src/main/java/org/bukkit/entity/EntityType.java b/src/main/java/org/bukkit/entity/EntityType.java
+index b7a454ca11d484209d08d0003d4c19a431456687..0cdb4cbfddce1c138d7e2551c73713e616102123 100644
+--- a/src/main/java/org/bukkit/entity/EntityType.java
++++ b/src/main/java/org/bukkit/entity/EntityType.java
+@@ -461,6 +461,7 @@ public enum EntityType implements Keyed, Translatable, net.kyori.adventure.trans
+      * @param world the world to check
+      * @return true if this EntityType can be used to spawn an Entity for this World.
+      */
++    @Deprecated(forRemoval = true, since = "1.20") // Paper
+     public boolean isEnabledByFeature(@NotNull World world) {
+         return Bukkit.getDataPackManager().isEnabledByFeature(this, world);
+     }
 diff --git a/src/main/java/org/bukkit/packs/DataPack.java b/src/main/java/org/bukkit/packs/DataPack.java
-index 3d5af25a399589f1bdf95b77f584ae0ae5c26f02..ab512c7ee9d2442055b719d02d0d0ecc7ea8d992 100644
+index 3d5af25a399589f1bdf95b77f584ae0ae5c26f02..0705e8a2b3281f17dace6a79f149a69672a42124 100644
 --- a/src/main/java/org/bukkit/packs/DataPack.java
 +++ b/src/main/java/org/bukkit/packs/DataPack.java
 @@ -10,8 +10,10 @@ import org.jetbrains.annotations.NotNull;
@@ -139,12 +163,12 @@ index 3d5af25a399589f1bdf95b77f584ae0ae5c26f02..ab512c7ee9d2442055b719d02d0d0ecc
 + * @deprecated use {@link io.papermc.paper.datapack.Datapack}
   */
  @ApiStatus.Experimental
-+@Deprecated(forRemoval = true) // Paper
++@Deprecated(forRemoval = true, since = "1.20") // Paper
  public interface DataPack extends Keyed {
  
      /**
 diff --git a/src/main/java/org/bukkit/packs/DataPackManager.java b/src/main/java/org/bukkit/packs/DataPackManager.java
-index c33ca7b86426223200efa7df53faef061c3c7c0b..5ec17312564e245e6d482e89c2ef2a886d463154 100644
+index c33ca7b86426223200efa7df53faef061c3c7c0b..8e6e874c997985d0b02d572775b5f59065ff2cd3 100644
 --- a/src/main/java/org/bukkit/packs/DataPackManager.java
 +++ b/src/main/java/org/bukkit/packs/DataPackManager.java
 @@ -13,8 +13,10 @@ import org.jetbrains.annotations.Nullable;
@@ -154,7 +178,7 @@ index c33ca7b86426223200efa7df53faef061c3c7c0b..5ec17312564e245e6d482e89c2ef2a88
 + * @deprecated use {@link io.papermc.paper.datapack.DatapackManager}
   */
  @ApiStatus.Experimental
-+@Deprecated(forRemoval = true) // Paper
++@Deprecated(forRemoval = true, since = "1.20") // Paper
  public interface DataPackManager {
  
      /**

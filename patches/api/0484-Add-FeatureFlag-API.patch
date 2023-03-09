@@ -1,0 +1,294 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Jake Potrebic <jake.m.potrebic@gmail.com>
+Date: Thu, 9 Mar 2023 11:24:43 -0800
+Subject: [PATCH] Add FeatureFlag API
+
+
+diff --git a/src/main/java/io/papermc/paper/world/flag/FeatureDependant.java b/src/main/java/io/papermc/paper/world/flag/FeatureDependant.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..4b4a2414324e01e7ccd74b5807ad4d0a7fac8e2a
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/world/flag/FeatureDependant.java
+@@ -0,0 +1,35 @@
++package io.papermc.paper.world.flag;
++
++import java.util.Set;
++import org.bukkit.FeatureFlag;
++import org.checkerframework.checker.nullness.qual.NonNull;
++import org.jetbrains.annotations.ApiStatus;
++import org.jetbrains.annotations.Unmodifiable;
++
++/**
++ * Implemented by types that are controlled by {@link FeatureFlag FeatureFlags}.
++ */
++@ApiStatus.Experimental
++@ApiStatus.NonExtendable
++public interface FeatureDependant {
++
++    /**
++     * Checks if this is enabled based on the loaded feature flags.
++     *
++     * @return true if enabled
++     */
++    default boolean isEnabled(final @NonNull FeatureFlagSetHolder featureFlagSetHolder) {
++        final Set<FeatureFlag> flags = featureFlagSetHolder.getFeatureFlags();
++        return flags.containsAll(this.requiredFeatures());
++    }
++
++    /**
++     * Gets the set of required feature flags for this
++     * to be enabled.
++     *
++     * @return the immutable set of feature flags
++     */
++    default @Unmodifiable @NonNull Set<FeatureFlag> requiredFeatures() {
++        return FeatureFlagProvider.provider().requiredFeatures(this);
++    }
++}
+diff --git a/src/main/java/io/papermc/paper/world/flag/FeatureFlagProvider.java b/src/main/java/io/papermc/paper/world/flag/FeatureFlagProvider.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..f64cbee35fd3c6fe7b5f7391f6d118166d26dc18
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/world/flag/FeatureFlagProvider.java
+@@ -0,0 +1,19 @@
++package io.papermc.paper.world.flag;
++
++import java.util.Optional;
++import java.util.ServiceLoader;
++import java.util.Set;
++import org.bukkit.FeatureFlag;
++import org.jetbrains.annotations.ApiStatus;
++
++@ApiStatus.Internal
++interface FeatureFlagProvider {
++
++    Optional<FeatureFlagProvider> PROVIDER = ServiceLoader.load(FeatureFlagProvider.class).findFirst();
++
++    static FeatureFlagProvider provider() {
++        return PROVIDER.orElseThrow();
++    }
++
++    Set<FeatureFlag> requiredFeatures(FeatureDependant dependant);
++}
+diff --git a/src/main/java/io/papermc/paper/world/flag/FeatureFlagSetHolder.java b/src/main/java/io/papermc/paper/world/flag/FeatureFlagSetHolder.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..3b9ac7d9d830725a83371372bf0c1c4983c2c8e2
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/world/flag/FeatureFlagSetHolder.java
+@@ -0,0 +1,22 @@
++package io.papermc.paper.world.flag;
++
++import java.util.Set;
++import org.bukkit.FeatureFlag;
++import org.checkerframework.checker.nullness.qual.NonNull;
++import org.jetbrains.annotations.ApiStatus;
++import org.jetbrains.annotations.Unmodifiable;
++
++/**
++ * Implemented by types that hold {@link FeatureFlag FeatureFlags} like
++ * {@link org.bukkit.generator.WorldInfo} and {@link org.bukkit.RegionAccessor}.
++ */
++@ApiStatus.NonExtendable
++public interface FeatureFlagSetHolder {
++
++    /**
++     * Get all {@link FeatureFlag FeatureFlags} enabled in this world.
++     *
++     * @return all enabled {@link FeatureFlag FeatureFlags}
++     */
++    @Unmodifiable @NonNull Set<FeatureFlag> getFeatureFlags();
++}
+diff --git a/src/main/java/org/bukkit/FeatureFlag.java b/src/main/java/org/bukkit/FeatureFlag.java
+index fd5e433f930963c102c9c977523a0036eabc0477..0014d966628877f59196741c09020a612efdcb13 100644
+--- a/src/main/java/org/bukkit/FeatureFlag.java
++++ b/src/main/java/org/bukkit/FeatureFlag.java
+@@ -1,5 +1,10 @@
+ package org.bukkit;
+ 
++import com.google.common.base.Preconditions;
++import java.util.Collections;
++import java.util.Map;
++import net.kyori.adventure.key.Key;
++import org.intellij.lang.annotations.Subst;
+ import org.jetbrains.annotations.ApiStatus;
+ 
+ /**
+@@ -11,22 +16,22 @@ import org.jetbrains.annotations.ApiStatus;
+ @ApiStatus.Experimental
+ public interface FeatureFlag extends Keyed {
+ 
+-    public static final FeatureFlag VANILLA = Bukkit.getUnsafe().getFeatureFlag(NamespacedKey.minecraft("vanilla"));
++    Map<Key, FeatureFlag> ALL_FLAGS = Collections.unmodifiableMap(FeatureFlagImpl.ALL_FLAGS);
+ 
+-    @ApiStatus.Experimental // Paper - add missing annotation
+-    public static final FeatureFlag BUNDLE = Bukkit.getUnsafe().getFeatureFlag(NamespacedKey.minecraft("bundle"));
++    FeatureFlag VANILLA = create("vanilla");
+ 
+-    /**
+-     * <strong>AVAILABLE BETWEEN VERSIONS:</strong> 1.19 - 1.19.4
+-     *
+-     * @deprecated not available since 1.20
+-     */
+-    @Deprecated
+-    public static final FeatureFlag UPDATE_1_20 = Bukkit.getUnsafe().getFeatureFlag(NamespacedKey.minecraft("update_1_20"));
++    @ApiStatus.Experimental // Paper - add missing annotation
++    FeatureFlag BUNDLE = create("bundle");
+ 
+     @ApiStatus.Experimental // Paper - add missing annotation
+-    public static final FeatureFlag TRADE_REBALANCE = Bukkit.getUnsafe().getFeatureFlag(NamespacedKey.minecraft("trade_rebalance"));
++    FeatureFlag TRADE_REBALANCE = create("trade_rebalance");
+ 
+     @ApiStatus.Experimental // Paper - add missing annotation
+-    public static final FeatureFlag UPDATE_121 = Bukkit.getUnsafe().getFeatureFlag(NamespacedKey.minecraft("update_1_21"));
++    FeatureFlag UPDATE_121 = create("update_1_21");
++
++    private static FeatureFlag create(@Subst("vanilla") final String name) {
++        final FeatureFlag flag = new FeatureFlagImpl(NamespacedKey.minecraft(name));
++        Preconditions.checkState(FeatureFlagImpl.ALL_FLAGS.put(flag.key(), flag) == null, "Tried to add duplicate feature flag: " + name);
++        return flag;
++    }
+ }
+diff --git a/src/main/java/org/bukkit/FeatureFlagImpl.java b/src/main/java/org/bukkit/FeatureFlagImpl.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..cc719e999b6f5c9c672ee655da1839cd7cc8434d
+--- /dev/null
++++ b/src/main/java/org/bukkit/FeatureFlagImpl.java
+@@ -0,0 +1,20 @@
++package org.bukkit;
++
++import java.util.HashMap;
++import java.util.Map;
++import net.kyori.adventure.key.Key;
++import org.checkerframework.checker.nullness.qual.NonNull;
++import org.checkerframework.framework.qual.DefaultQualifier;
++import org.jetbrains.annotations.ApiStatus;
++
++@ApiStatus.Internal
++@DefaultQualifier(NonNull.class)
++record FeatureFlagImpl(NamespacedKey key) implements FeatureFlag {
++
++    static final Map<Key, FeatureFlag> ALL_FLAGS = new HashMap<>();
++
++    @Override
++    public NamespacedKey getKey() {
++        return this.key;
++    }
++}
+diff --git a/src/main/java/org/bukkit/RegionAccessor.java b/src/main/java/org/bukkit/RegionAccessor.java
+index eb33e8e671972aa308ad75a7ce9aa9ac526f470f..05ecf3cb38ff42c8b52405d900197e6bf47dd1e6 100644
+--- a/src/main/java/org/bukkit/RegionAccessor.java
++++ b/src/main/java/org/bukkit/RegionAccessor.java
+@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
+  * A RegionAccessor gives access to getting, modifying and spawning {@link Biome}, {@link BlockState} and {@link Entity},
+  * as well as generating some basic structures.
+  */
+-public interface RegionAccessor extends Keyed { // Paper
++public interface RegionAccessor extends Keyed, io.papermc.paper.world.flag.FeatureFlagSetHolder { // Paper - feature flag API
+ 
+     /**
+      * Gets the {@link Biome} at the given {@link Location}.
+diff --git a/src/main/java/org/bukkit/UnsafeValues.java b/src/main/java/org/bukkit/UnsafeValues.java
+index 0e9ccfee7a03d341e7c4d271f53b4ed168b404ef..23b4fd0823ce018b4d6d32b96aada01a03ae6144 100644
+--- a/src/main/java/org/bukkit/UnsafeValues.java
++++ b/src/main/java/org/bukkit/UnsafeValues.java
+@@ -106,8 +106,7 @@ public interface UnsafeValues {
+ 
+     String getTranslationKey(Attribute attribute);
+ 
+-    @Nullable
+-    FeatureFlag getFeatureFlag(@NotNull NamespacedKey key);
++    // Paper - replace with better system
+ 
+     /**
+      * Do not use, method will get removed, and the plugin won't run
+diff --git a/src/main/java/org/bukkit/block/BlockType.java b/src/main/java/org/bukkit/block/BlockType.java
+index 61a73e813f7c14c61fac358e96aaaa64c41e560b..9150c0d1ae92a94c8c1b144058d4700798849b69 100644
+--- a/src/main/java/org/bukkit/block/BlockType.java
++++ b/src/main/java/org/bukkit/block/BlockType.java
+@@ -125,7 +125,7 @@ import org.jetbrains.annotations.Nullable;
+  * changes may occur. Do not use this API in plugins.
+  */
+ @ApiStatus.Internal
+-public interface BlockType extends Keyed, Translatable, net.kyori.adventure.translation.Translatable { // Paper - add translatable
++public interface BlockType extends Keyed, Translatable, net.kyori.adventure.translation.Translatable, io.papermc.paper.world.flag.FeatureDependant { // Paper - add translatable & feature flag API
+ 
+     /**
+      * Typed represents a subtype of {@link BlockType}s that have a known block
+diff --git a/src/main/java/org/bukkit/enchantments/Enchantment.java b/src/main/java/org/bukkit/enchantments/Enchantment.java
+index ec0429640f1a395e4d7765500fd41ce347ae8b03..14e5e2f94e047357d27df30454dc70b73a3fe212 100644
+--- a/src/main/java/org/bukkit/enchantments/Enchantment.java
++++ b/src/main/java/org/bukkit/enchantments/Enchantment.java
+@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
+ /**
+  * The various type of enchantments that may be added to armour or weapons
+  */
+-public abstract class Enchantment implements Keyed, Translatable, net.kyori.adventure.translation.Translatable { // Paper - Adventure translations
++public abstract class Enchantment implements Keyed, Translatable, net.kyori.adventure.translation.Translatable, io.papermc.paper.world.flag.FeatureDependant { // Paper - Adventure translations & feature flag API
+     /**
+      * Provides protection against environmental damage
+      */
+diff --git a/src/main/java/org/bukkit/entity/EntityType.java b/src/main/java/org/bukkit/entity/EntityType.java
+index d99fe47f94e20d7304f66c28ebd2cce0a95d70ca..d9421bc597ced0efd51afb4f3a6d963caaea2cfb 100644
+--- a/src/main/java/org/bukkit/entity/EntityType.java
++++ b/src/main/java/org/bukkit/entity/EntityType.java
+@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Contract;
+ import org.jetbrains.annotations.NotNull;
+ import org.jetbrains.annotations.Nullable;
+ 
+-public enum EntityType implements Keyed, Translatable, net.kyori.adventure.translation.Translatable { // Paper - translatable
++public enum EntityType implements Keyed, Translatable, net.kyori.adventure.translation.Translatable, io.papermc.paper.world.flag.FeatureDependant { // Paper - translatable
+ 
+     // These strings MUST match the strings in nms.EntityTypes and are case sensitive.
+     /**
+diff --git a/src/main/java/org/bukkit/generator/WorldInfo.java b/src/main/java/org/bukkit/generator/WorldInfo.java
+index 5067f1371433cccd3287af7f03e152f2c3c1ece3..e0cb282541548ac3bd24cce86b3413f5748ea8bc 100644
+--- a/src/main/java/org/bukkit/generator/WorldInfo.java
++++ b/src/main/java/org/bukkit/generator/WorldInfo.java
+@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
+ /**
+  * Holds various information of a World
+  */
+-public interface WorldInfo {
++public interface WorldInfo extends io.papermc.paper.world.flag.FeatureFlagSetHolder { // Paper - feature flag API
+ 
+     /**
+      * Gets the unique name of this world
+diff --git a/src/main/java/org/bukkit/inventory/ItemType.java b/src/main/java/org/bukkit/inventory/ItemType.java
+index 077bd4d4e50169780f27e8502104e9e4b2ecdae6..f7b4f858cc71d90c29aa9468200ce2192f140675 100644
+--- a/src/main/java/org/bukkit/inventory/ItemType.java
++++ b/src/main/java/org/bukkit/inventory/ItemType.java
+@@ -49,7 +49,7 @@ import org.jetbrains.annotations.Nullable;
+  * changes may occur. Do not use this API in plugins.
+  */
+ @ApiStatus.Internal
+-public interface ItemType extends Keyed, Translatable, net.kyori.adventure.translation.Translatable { // Paper - add Translatable
++public interface ItemType extends Keyed, Translatable, net.kyori.adventure.translation.Translatable, io.papermc.paper.world.flag.FeatureDependant { // Paper - add Translatable & feature flag API
+ 
+     /**
+      * Typed represents a subtype of {@link ItemType}s that have a known item meta type
+diff --git a/src/main/java/org/bukkit/potion/PotionEffectType.java b/src/main/java/org/bukkit/potion/PotionEffectType.java
+index 7a7b98d40a031b09d6bc62df32d2ddeb25a9d41e..942f3e9bddb0e3bd4f26fea5c8fbde5eede35512 100644
+--- a/src/main/java/org/bukkit/potion/PotionEffectType.java
++++ b/src/main/java/org/bukkit/potion/PotionEffectType.java
+@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
+ /**
+  * Represents a type of potion and its effect on an entity.
+  */
+-public abstract class PotionEffectType implements Keyed, Translatable, net.kyori.adventure.translation.Translatable { // Paper - implement Translatable
++public abstract class PotionEffectType implements Keyed, Translatable, net.kyori.adventure.translation.Translatable, io.papermc.paper.world.flag.FeatureDependant { // Paper - implement Translatable & feature flag API
+     private static final BiMap<Integer, PotionEffectType> ID_MAP = HashBiMap.create();
+ 
+     /**
+diff --git a/src/main/java/org/bukkit/potion/PotionType.java b/src/main/java/org/bukkit/potion/PotionType.java
+index 1fdd56450e8a0763833742c805847a723c43bf6c..85767fa7868101799c3cde7d6d95432fb8587901 100644
+--- a/src/main/java/org/bukkit/potion/PotionType.java
++++ b/src/main/java/org/bukkit/potion/PotionType.java
+@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
+  * This enum reflects and matches each potion state that can be obtained from
+  * the Creative mode inventory
+  */
+-public enum PotionType implements Keyed {
++public enum PotionType implements Keyed, io.papermc.paper.world.flag.FeatureDependant { // Paper - feature flag API
+     WATER("water"),
+     MUNDANE("mundane"),
+     THICK("thick"),
