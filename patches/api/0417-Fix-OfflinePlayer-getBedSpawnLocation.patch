@@ -1,0 +1,92 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Lulu13022002 <41980282+Lulu13022002@users.noreply.github.com>
+Date: Wed, 20 Jul 2022 14:09:22 +0200
+Subject: [PATCH] Fix OfflinePlayer#getBedSpawnLocation
+
+
+diff --git a/src/main/java/org/bukkit/OfflinePlayer.java b/src/main/java/org/bukkit/OfflinePlayer.java
+index 69b50eee42e8c52063033705bd23a5ef5231ed83..02f0428e588fe4bd2a5bbd69a1ee0947f003176a 100644
+--- a/src/main/java/org/bukkit/OfflinePlayer.java
++++ b/src/main/java/org/bukkit/OfflinePlayer.java
+@@ -172,15 +172,31 @@ public interface OfflinePlayer extends ServerOperator, AnimalTamer, Configuratio
+      */
+     public boolean hasPlayedBefore();
+ 
++    // Paper start
+     /**
+-     * Gets the Location where the player will spawn at their bed, null if
+-     * they have not slept in one or their current bed spawn is invalid.
++     * Gets the Location where the player will spawn at their spawn block (bed, respawn anchor...), null if
++     * they have not slept in one.
++     *
++     * Keep in mind that will not be equals to the online equivalent.
+      *
+-     * @return Bed Spawn Location if bed exists, otherwise null.
++     * @return Block Spawn Location if the block exists, otherwise null.
+      */
+     @Nullable
+-    public Location getBedSpawnLocation();
+-    // Paper start
++    default Location getBedSpawnLocation() {
++        return getBedSpawnLocation(false); // Keep old behavior for offline
++    }
++
++    /**
++     * Gets the Location where the player will spawn at their spawn block (bed, respawn anchor...), null if
++     * they have not slept in one.
++     *
++     * @param load Load the current location to retrieve the exact position of the spawn block
++     *             and check if this position is valid or not
++     * @return Block Spawn Location if the block exists, otherwise null.
++     */
++    @Nullable
++    Location getBedSpawnLocation(boolean load);
++
+     /**
+      * Gets the last date and time that this player logged into the server.
+      * <p>
+diff --git a/src/main/java/org/bukkit/entity/Player.java b/src/main/java/org/bukkit/entity/Player.java
+index 8fe11fce80c3b29164b79ece8dc9ed8da6fc1790..c2bb6c85e66740fe5c6d1f31433d002000023258 100644
+--- a/src/main/java/org/bukkit/entity/Player.java
++++ b/src/main/java/org/bukkit/entity/Player.java
+@@ -352,29 +352,33 @@ public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginM
+      */
+     public boolean isSleepingIgnored();
+ 
++    // Paper start
+     /**
+-     * Gets the Location where the player will spawn at their bed, null if
+-     * they have not slept in one or their current bed spawn is invalid.
++     * Gets the Location where the player will spawn at their spawn block (bed, respawn anchor...),
++     * null if they have not slept in one or their current spawn block is invalid.
+      *
+-     * @return Bed Spawn Location if bed exists, otherwise null.
++     * @return Block Spawn Location if the block exists, otherwise null.
+      */
+     @Nullable
+     @Override
+-    public Location getBedSpawnLocation();
++    default Location getBedSpawnLocation() {
++        return getBedSpawnLocation(true);
++    }
++    // Paper end
+ 
+     /**
+-     * Sets the Location where the player will spawn at their bed.
++     * Sets the Location where the player will spawn at their spawn block (bed, respawn anchor...). <!-- Paper - Change to generic spawn block, more future proof and include the respawn anchor -->
+      *
+      * @param location where to set the respawn location
+      */
+     public void setBedSpawnLocation(@Nullable Location location);
+ 
+     /**
+-     * Sets the Location where the player will spawn at their bed.
++     * Sets the Location where the player will spawn at their spawn block (bed, respawn anchor...). <!-- Paper - Change to generic spawn block, more future-proof and include the respawn anchor -->
+      *
+      * @param location where to set the respawn location
+      * @param force whether to forcefully set the respawn location even if a
+-     *     valid bed is not present
++     *     valid spawn block is not present <!-- Paper - Change to generic spawn block, more future-proof and include the respawn anchor -->
+      */
+     public void setBedSpawnLocation(@Nullable Location location, boolean force);
+ 
