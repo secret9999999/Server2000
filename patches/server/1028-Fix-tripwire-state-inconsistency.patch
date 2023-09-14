@@ -41,7 +41,7 @@ index bdb99b799d1a97f1340c3d388d2901f7cb1c3527..3cb1db27dba902678a5848a1fb5e2c6e
                      } else if (iblockdata1.is((Block) this)) {
                          ++k;
 diff --git a/src/main/java/net/minecraft/world/level/block/TripWireHookBlock.java b/src/main/java/net/minecraft/world/level/block/TripWireHookBlock.java
-index d9b3877257b31ca1b5acc4a47fbf5b993de69ae0..7f2dcf6a9e69779e6f898284b58fb1e32902000c 100644
+index 320161436832ffdced84259e4fcbbaaa4148aea8..b44bf5f810ffeb0d64bd63407940171a1ff7e416 100644
 --- a/src/main/java/net/minecraft/world/level/block/TripWireHookBlock.java
 +++ b/src/main/java/net/minecraft/world/level/block/TripWireHookBlock.java
 @@ -118,7 +118,13 @@ public class TripWireHookBlock extends Block {
@@ -76,9 +76,9 @@ index d9b3877257b31ca1b5acc4a47fbf5b993de69ae0..7f2dcf6a9e69779e6f898284b58fb1e3
                      aiblockdata[k] = iblockdata2;
                      if (k == i) {
                          world.scheduleTick(pos, block, 10);
-@@ -187,7 +194,7 @@ public class TripWireHookBlock extends Block {
-             // CraftBukkit end
+@@ -207,7 +214,7 @@ public class TripWireHookBlock extends Block {
  
+             if (!cancelledEmitterHook) { // Paper - Call BlockRedstoneEvent properly
              TripWireHookBlock.emitState(world, pos, flag4, flag5, flag2, flag3);
 -            if (!flag) {
 +            if (!beingRemoved) { // Paper - fix tripwire state inconsistency
