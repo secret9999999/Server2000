@@ -5,7 +5,7 @@ Subject: [PATCH] API for updating recipes on clients
 
 
 diff --git a/src/main/java/net/minecraft/server/players/PlayerList.java b/src/main/java/net/minecraft/server/players/PlayerList.java
-index fff7ad7a45f310783ac96b44575ad3db13d537fa..640e9bd618dc8286933318744c2064ede1fd9b5f 100644
+index a572e1f71c4e974a463ab436e7e42a0599da9dc9..39d37671fe76f1473850fe22391fa7f0744f1a80 100644
 --- a/src/main/java/net/minecraft/server/players/PlayerList.java
 +++ b/src/main/java/net/minecraft/server/players/PlayerList.java
 @@ -1524,6 +1524,13 @@ public abstract class PlayerList {

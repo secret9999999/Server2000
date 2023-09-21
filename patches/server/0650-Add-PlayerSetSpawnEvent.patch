@@ -154,7 +154,7 @@ index eaa1b300870f3bbf5a34cb99e6af116b7c244628..59e02bd5b49e0c900d049a1f1927316d
  
      public void trackChunk(ChunkPos chunkPos, Packet<?> chunkDataPacket) {
 diff --git a/src/main/java/net/minecraft/server/players/PlayerList.java b/src/main/java/net/minecraft/server/players/PlayerList.java
-index c8e38ed5e14fb137a7d169c57bc58bdf4421e0cc..c3fb1bbc0e2a44160e86b5bb4ab88f78991fa9e6 100644
+index 3f09fb0a628fd0ef7295d2675178876d77ec4f77..d92582178f1806d6dc14a5d446276865daba3846 100644
 --- a/src/main/java/net/minecraft/server/players/PlayerList.java
 +++ b/src/main/java/net/minecraft/server/players/PlayerList.java
 @@ -860,7 +860,7 @@ public abstract class PlayerList {

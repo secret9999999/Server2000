@@ -5,15 +5,15 @@ Subject: [PATCH] Added getHostname to AsyncPlayerPreLoginEvent
 
 
 diff --git a/src/main/java/net/minecraft/server/network/ServerLoginPacketListenerImpl.java b/src/main/java/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
-index cd4e76fe5b79c7d9e615b4886a568c74db757436..3fcd7bfdb8945b276c94a263e9da6b85ce470366 100644
+index 70a768724d43680b4965bbea8a286a546eb73f78..b314967a302279fa07724d21b2d9d1947dbc045f 100644
 --- a/src/main/java/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
 +++ b/src/main/java/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
-@@ -371,7 +371,7 @@ public class ServerLoginPacketListenerImpl implements ServerLoginPacketListener,
+@@ -370,7 +370,7 @@ public class ServerLoginPacketListenerImpl implements ServerLoginPacketListener,
  
                          // Paper start
                          com.destroystokyo.paper.profile.PlayerProfile profile = com.destroystokyo.paper.profile.CraftPlayerProfile.asBukkitMirror(ServerLoginPacketListenerImpl.this.gameProfile);
--                        AsyncPlayerPreLoginEvent asyncEvent = new AsyncPlayerPreLoginEvent(playerName, address, rawAddress, uniqueId, profile); // Paper - add rawAddress
-+                        AsyncPlayerPreLoginEvent asyncEvent = new AsyncPlayerPreLoginEvent(playerName, address, rawAddress, uniqueId, profile, ServerLoginPacketListenerImpl.this.connection.hostname); // Paper - add rawAddress & hostname
+-                        AsyncPlayerPreLoginEvent asyncEvent = new AsyncPlayerPreLoginEvent(playerName, address, connection.channel.remoteAddress(), uniqueId, profile); // Paper
++                        AsyncPlayerPreLoginEvent asyncEvent = new AsyncPlayerPreLoginEvent(playerName, address, connection.channel.remoteAddress(), uniqueId, profile, ServerLoginPacketListenerImpl.this.connection.hostname); // Paper
                          server.getPluginManager().callEvent(asyncEvent);
                          profile = asyncEvent.getPlayerProfile();
                          profile.complete(true); // Paper - setPlayerProfileAPI
