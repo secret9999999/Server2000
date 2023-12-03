@@ -1155,7 +1155,7 @@ index 5de5209e04d631bd6a50e28e8d3abebf148252c1..19b3f4fa7678a038bf25efc2a8b46dda
          DebugPackets.sendPoiPacketsForChunk(world, chunkPos);
      }
 diff --git a/src/main/java/net/minecraft/world/level/Level.java b/src/main/java/net/minecraft/world/level/Level.java
-index addaa87d68591dced30e304dc3880588a45234d6..4b0a7ef056ff7dd687d5135ac748ee57d556121e 100644
+index 6d1f90960a3ed680c81f8a3133d91e9a6ffda71b..f4bc1cb764110aabd108c13353d85072f9855e30 100644
 --- a/src/main/java/net/minecraft/world/level/Level.java
 +++ b/src/main/java/net/minecraft/world/level/Level.java
 @@ -175,6 +175,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable {
