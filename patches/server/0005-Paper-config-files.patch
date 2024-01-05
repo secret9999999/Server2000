@@ -482,10 +482,10 @@ index 0000000000000000000000000000000000000000..c01b4393439838976965823298f12e47
 +}
 diff --git a/src/main/java/io/papermc/paper/configuration/GlobalConfiguration.java b/src/main/java/io/papermc/paper/configuration/GlobalConfiguration.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..73a34b4e378e6012a01c8ac8b092248298be6648
+index 0000000000000000000000000000000000000000..562e0452084058ffaf5af74ba4bdc70b85d0bab5
 --- /dev/null
 +++ b/src/main/java/io/papermc/paper/configuration/GlobalConfiguration.java
-@@ -0,0 +1,309 @@
+@@ -0,0 +1,337 @@
 +package io.papermc.paper.configuration;
 +
 +import co.aikar.timings.MinecraftTimings;
@@ -504,6 +504,9 @@ index 0000000000000000000000000000000000000000..73a34b4e378e6012a01c8ac8b0922482
 +import org.spongepowered.configurate.objectmapping.meta.Required;
 +import org.spongepowered.configurate.objectmapping.meta.Setting;
 +
++import java.io.IOException;
++import java.nio.file.Files;
++import java.nio.file.Path;
 +import java.util.List;
 +import java.util.Map;
 +import java.util.Objects;
@@ -511,7 +514,7 @@ index 0000000000000000000000000000000000000000..73a34b4e378e6012a01c8ac8b0922482
 +@SuppressWarnings({"CanBeFinal", "FieldCanBeLocal", "FieldMayBeFinal", "NotNullFieldNotInitialized", "InnerClassMayBeStatic"})
 +public class GlobalConfiguration extends ConfigurationPart {
 +    private static final Logger LOGGER = LogUtils.getLogger();
-+    static final int CURRENT_VERSION = 29; // (when you change the version, change the comment, so it conflicts on rebases): <insert changes here>
++    static final int CURRENT_VERSION = 30; // (when you change the version, change the comment, so it conflicts on rebases): Add velocity-secret-file parameter
 +    private static GlobalConfiguration instance;
 +    public static GlobalConfiguration get() {
 +        return instance;
@@ -550,7 +553,8 @@ index 0000000000000000000000000000000000000000..73a34b4e378e6012a01c8ac8b0922482
 +        public boolean serverNamePrivacy = false;
 +        public List<String> hiddenConfigEntries = List.of(
 +            "database",
-+            "proxies.velocity.secret"
++            "proxies.velocity.secret",
++            "proxies.velocity.computedSecret"
 +        );
 +        public int historyInterval = 300;
 +        public int historyLength = 3600;
@@ -577,12 +581,36 @@ index 0000000000000000000000000000000000000000..73a34b4e378e6012a01c8ac8b0922482
 +            public boolean enabled = false;
 +            public boolean onlineMode = false;
 +            public String secret = "";
++            public String secretFile = "";
++            @IgnoredSetting
++            public String computedSecret = "";
 +
 +            @PostProcess
 +            private void postProcess() {
-+                if (this.enabled && this.secret.isEmpty()) {
-+                    LOGGER.error("Velocity is enabled, but no secret key was specified. A secret key is required. Disabling velocity...");
-+                    this.enabled = false;
++                if (this.enabled) {
++                    if (!this.secretFile.isEmpty()) {
++                        try {
++                            this.computedSecret = Files.readString(Path.of(this.secretFile));
++                        } catch (IOException e) {
++                            LOGGER.error("Velocity is enabled, but we were not able to read the specified secret file. Disabling velocity...", e);
++                            this.enabled = false;
++                        }
++                    } else if (!this.secret.isEmpty()) {
++                        this.computedSecret = secret;
++                        try {
++                            final String defaultSecretFilePath = "forwarding.secret";
++                            final Path secretFilePath = Path.of(defaultSecretFilePath);
++                            Files.writeString(secretFilePath, this.secret);
++                            this.secretFile = defaultSecretFilePath;
++                            this.secret = "";
++                            LOGGER.info("Migrated velocity forwarding secret from global config to {}", secretFilePath.toAbsolutePath());
++                        } catch (IOException e) {
++                            LOGGER.error("Failed to migrate velocity secret. For security reasons, please put the secret in a separate file and configure the path", e);
++                        }
++                    } else {
++                        LOGGER.error("Velocity is enabled, but no secret key was specified. A secret key is required. Disabling velocity...");
++                        this.enabled = false;
++                    }
 +                }
 +            }
 +        }
@@ -795,6 +823,38 @@ index 0000000000000000000000000000000000000000..73a34b4e378e6012a01c8ac8b0922482
 +        public boolean disableMushroomBlockUpdates = false;
 +    }
 +}
+diff --git a/src/main/java/io/papermc/paper/configuration/IgnoredSetting.java b/src/main/java/io/papermc/paper/configuration/IgnoredSetting.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..f87b15379dc369ea55569fe4e94080f9e70e9649
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/configuration/IgnoredSetting.java
+@@ -0,0 +1,26 @@
++package io.papermc.paper.configuration;
++
++import java.lang.annotation.Documented;
++import java.lang.annotation.ElementType;
++import java.lang.annotation.Retention;
++import java.lang.annotation.RetentionPolicy;
++import java.lang.annotation.Target;
++import java.lang.reflect.AnnotatedElement;
++import org.checkerframework.checker.nullness.qual.Nullable;
++import org.spongepowered.configurate.objectmapping.meta.NodeResolver;
++
++@Documented
++@Retention(RetentionPolicy.RUNTIME)
++@Target(ElementType.FIELD)
++public @interface IgnoredSetting {
++
++    class Factory implements NodeResolver.Factory {
++        @Override
++        public @Nullable NodeResolver make(String name, AnnotatedElement element) {
++            if (element.isAnnotationPresent(IgnoredSetting.class)) {
++                return NodeResolver.SKIP_FIELD;
++            }
++            return null;
++        }
++    }
++}
 diff --git a/src/main/java/io/papermc/paper/configuration/NestedSetting.java b/src/main/java/io/papermc/paper/configuration/NestedSetting.java
 new file mode 100644
 index 0000000000000000000000000000000000000000..69add4a7f1147015806bc9b63a8340d1893356c1
@@ -835,7 +895,7 @@ index 0000000000000000000000000000000000000000..69add4a7f1147015806bc9b63a8340d1
 +}
 diff --git a/src/main/java/io/papermc/paper/configuration/PaperConfigurations.java b/src/main/java/io/papermc/paper/configuration/PaperConfigurations.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..fa1c0aee8c3a4d0868482cf5c703bbfd08e09874
+index 0000000000000000000000000000000000000000..a34e2db376165a915ba8c1d3fe8e354c7b347495
 --- /dev/null
 +++ b/src/main/java/io/papermc/paper/configuration/PaperConfigurations.java
 @@ -0,0 +1,465 @@
@@ -1012,7 +1072,7 @@ index 0000000000000000000000000000000000000000..fa1c0aee8c3a4d0868482cf5c703bbfd
 +
 +    @Override
 +    protected ObjectMapper.Factory.Builder createGlobalObjectMapperFactoryBuilder() {
-+        return defaultGlobalFactoryBuilder(super.createGlobalObjectMapperFactoryBuilder());
++        return defaultGlobalFactoryBuilder(super.createGlobalObjectMapperFactoryBuilder()).addNodeResolver(new IgnoredSetting.Factory());
 +    }
 +
 +    private static ObjectMapper.Factory.Builder defaultGlobalFactoryBuilder(ObjectMapper.Factory.Builder builder) {
@@ -4851,7 +4911,7 @@ index 8cc3fd73eaa41b87c63cf26e299affca16f20d87..afd39623d2c2e9270510a6a83b591839
  
      private void readScoreboard(DimensionDataStorage persistentStateManager) {
 diff --git a/src/main/java/net/minecraft/server/Services.java b/src/main/java/net/minecraft/server/Services.java
-index 1d611538d339345df065cd9c0c582d02e1fb0cc7..92d1ad919c1b3e27af9cc74ada19f1e9c4f3471f 100644
+index 305565922624bc54bd6dc8fbed8a074591246f0d..355147c3922bc9c349de6138563b4753776720cd 100644
 --- a/src/main/java/net/minecraft/server/Services.java
 +++ b/src/main/java/net/minecraft/server/Services.java
 @@ -10,14 +10,30 @@ import javax.annotation.Nullable;
@@ -4904,7 +4964,7 @@ index dd16b56a478e1cd6f1b3c5563c9c02025d894802..458c04786f7b56f3c006e1e717c0ac70
          this.setPvpAllowed(dedicatedserverproperties.pvp);
          this.setFlightAllowed(dedicatedserverproperties.allowFlight);
 diff --git a/src/main/java/net/minecraft/server/dedicated/Settings.java b/src/main/java/net/minecraft/server/dedicated/Settings.java
-index 37ab411817008d4e6194e177d88d50931e53b42e..ca23639f15107ccd43b874ae38fa37279b827a8f 100644
+index 397c978c71f36c8abe1c52e545699fc7928a6917..d9ad5087d152a2233d16743768d9ce885f32071d 100644
 --- a/src/main/java/net/minecraft/server/dedicated/Settings.java
 +++ b/src/main/java/net/minecraft/server/dedicated/Settings.java
 @@ -119,6 +119,7 @@ public abstract class Settings<T extends Settings<T>> {
@@ -4929,7 +4989,7 @@ index ecc61c7b1b4eb887795ffd39578b70b4e77f5213..92cb1c23f2ef95f9be6c688146ee81aa
          this.convertable = convertable_conversionsession;
          this.uuid = WorldUUID.getUUID(convertable_conversionsession.levelDirectory.path().toFile());
 diff --git a/src/main/java/net/minecraft/world/level/Level.java b/src/main/java/net/minecraft/world/level/Level.java
-index cff78fc8d073be7541628bb40670f82d1e9917cd..50ea733f42d0f06a62b55e61b0c73995896b0d6a 100644
+index 8487fa452e4009c0f2a23a0d4eac4bf56f91447b..81fbc18b0cd9bc443555001947796342be4123b8 100644
 --- a/src/main/java/net/minecraft/world/level/Level.java
 +++ b/src/main/java/net/minecraft/world/level/Level.java
 @@ -158,6 +158,12 @@ public abstract class Level implements LevelAccessor, AutoCloseable {
