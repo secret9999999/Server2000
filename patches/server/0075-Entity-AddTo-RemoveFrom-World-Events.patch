@@ -5,7 +5,7 @@ Subject: [PATCH] Entity AddTo/RemoveFrom World Events
 
 
 diff --git a/src/main/java/net/minecraft/server/level/ServerLevel.java b/src/main/java/net/minecraft/server/level/ServerLevel.java
-index 5975cc2fa72609ea5f3e6f99155d6e5bc321a321..0da9a1f428e2fa412de08296e1bafaea0ddd05d0 100644
+index 5975cc2fa72609ea5f3e6f99155d6e5bc321a321..38d27d84c985724d1f58bbb7c8f19842cf397074 100644
 --- a/src/main/java/net/minecraft/server/level/ServerLevel.java
 +++ b/src/main/java/net/minecraft/server/level/ServerLevel.java
 @@ -2161,6 +2161,7 @@ public class ServerLevel extends Level implements WorldGenLevel {
@@ -16,11 +16,17 @@ index 5975cc2fa72609ea5f3e6f99155d6e5bc321a321..0da9a1f428e2fa412de08296e1bafaea
          }
  
          public void onTrackingEnd(Entity entity) {
-@@ -2236,6 +2237,7 @@ public class ServerLevel extends Level implements WorldGenLevel {
+@@ -2236,6 +2237,13 @@ public class ServerLevel extends Level implements WorldGenLevel {
                  }
              }
              // CraftBukkit end
-+            new com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent(entity.getBukkitEntity(), ServerLevel.this.getWorld()).callEvent(); // Paper - fire while valid
++            // Paper start - fire while valid
++            com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent.RemovalReason removalReason = com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent.RemovalReason.UNKNOWN;
++            Entity.RemovalReason reason = entity.getRemovalReason();
++            if (reason != null) removalReason = com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent.RemovalReason.values()[reason.ordinal()];
++            else if (entity.chunkStatus == FullChunkStatus.INACCESSIBLE) removalReason = com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent.RemovalReason.UNLOADED_TO_CHUNK;
++            new com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent(entity.getBukkitEntity(), ServerLevel.this.getWorld(), removalReason).callEvent();
++            // Paper end
          }
  
          public void onSectionChange(Entity entity) {
