@@ -57,16 +57,17 @@ index 0000000000000000000000000000000000000000..1d8e3c93a139bba11affca74b742269f
 +}
 diff --git a/src/main/java/com/destroystokyo/paper/event/entity/EntityRemoveFromWorldEvent.java b/src/main/java/com/destroystokyo/paper/event/entity/EntityRemoveFromWorldEvent.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..d75e6a8334c7408ea8c3f155414fc14dc427f190
+index 0000000000000000000000000000000000000000..53288666e3f81f7063987cfc3ea3919c766bb3db
 --- /dev/null
 +++ b/src/main/java/com/destroystokyo/paper/event/entity/EntityRemoveFromWorldEvent.java
-@@ -0,0 +1,43 @@
+@@ -0,0 +1,115 @@
 +package com.destroystokyo.paper.event.entity;
 +
 +import org.bukkit.World;
 +import org.bukkit.entity.Entity;
 +import org.bukkit.event.HandlerList;
 +import org.bukkit.event.entity.EntityEvent;
++import org.bukkit.event.player.PlayerQuitEvent;
 +import org.jetbrains.annotations.ApiStatus;
 +import org.jetbrains.annotations.NotNull;
 +
@@ -78,12 +79,15 @@ index 0000000000000000000000000000000000000000..d75e6a8334c7408ea8c3f155414fc14d
 +
 +    private static final HandlerList HANDLER_LIST = new HandlerList();
 +
-+    @NotNull private final World world;
++    private final World world;
++    private final RemovalReason removalReason;
 +
 +    @ApiStatus.Internal
-+    public EntityRemoveFromWorldEvent(@NotNull Entity entity, @NotNull World world) {
++    public EntityRemoveFromWorldEvent(@NotNull Entity entity, @NotNull World world, @NotNull RemovalReason removalReason) {
 +        super(entity);
++
 +        this.world = world;
++        this.removalReason = removalReason;
 +    }
 +
 +    /**
@@ -92,6 +96,15 @@ index 0000000000000000000000000000000000000000..d75e6a8334c7408ea8c3f155414fc14d
 +    @NotNull
 +    public World getWorld() {
 +        return this.world;
++    }
++
++    /**
++     * Gets the reason the entity is being removed from the world.
++     * @return the removal reason
++     */
++    @NotNull
++    public RemovalReason getRemovalReason() {
++        return removalReason;
 +    }
 +
 +    @NotNull
@@ -103,4 +116,63 @@ index 0000000000000000000000000000000000000000..d75e6a8334c7408ea8c3f155414fc14d
 +    public static HandlerList getHandlerList() {
 +        return HANDLER_LIST;
 +    }
++
++    public enum RemovalReason {
++
++        /**
++         * When an entity is removed after being killed.
++         */
++        KILLED(true, false),
++        /**
++         * When an entity is removed after being discarded, such as from despawning.
++         */
++        DISCARDED(true, false),
++        /**
++         * When an entity is removed after its containing chunk unloads.
++         */
++        UNLOADED_TO_CHUNK(false, true),
++        /**
++         * When a player and its vehicle/passengers are removed after a player quits.
++         */
++        UNLOADED_WITH_PLAYER(false, false),
++        /**
++         * When an entity is removed after moving to another world.
++         */
++        CHANGED_DIMENSION(false, false),
++        /**
++         * Used when the cause of a removal is unknown.
++         */
++        UNKNOWN(false, false);
++
++        private final boolean destroy;
++        private final boolean save;
++
++        RemovalReason(boolean destroy, boolean save) {
++            this.destroy = destroy;
++            this.save = save;
++        }
++
++        /**
++         * Whether the entity instance being removed will be destroyed.
++         *
++         * @return whether the entity will be destroyed
++         */
++        public boolean willDestroy() {
++            return this.destroy;
++        }
++
++        /**
++         * Whether the entity instance being removed will be saved. This does not account for the value of
++         * {@link Entity#isPersistent}. Entities removed with {@link RemovalReason#UNLOADED_WITH_PLAYER} are saved
++         * prior to the event firing, and thus should be modified prior to this using another event, such as
++         * with {@link PlayerQuitEvent}.
++         *
++         * @return whether the entity will be saved
++         */
++        public boolean willSave() {
++            return this.save;
++        }
++
++    }
++
 +}

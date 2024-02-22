@@ -7,10 +7,10 @@ Makes certain entities check all players when searching for a player
 instead of just checking players in their world.
 
 diff --git a/src/main/java/net/minecraft/server/level/ServerLevel.java b/src/main/java/net/minecraft/server/level/ServerLevel.java
-index e7ed2d1160d412790b23550f9ae967179b7a61f4..711712f144d7b0e26d1248f53bf7ac3963c5df4a 100644
+index 0d5a80327fbe45d5c7eb364d2a1ac9de811d6388..97df66e61249df54d276d8e0ab7fb74421405236 100644
 --- a/src/main/java/net/minecraft/server/level/ServerLevel.java
 +++ b/src/main/java/net/minecraft/server/level/ServerLevel.java
-@@ -2385,4 +2385,12 @@ public class ServerLevel extends Level implements WorldGenLevel {
+@@ -2391,4 +2391,12 @@ public class ServerLevel extends Level implements WorldGenLevel {
              entity.updateDynamicGameEventListener(DynamicGameEventListener::move);
          }
      }
