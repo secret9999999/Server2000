@@ -4,12 +4,104 @@ Date: Sat, 24 Feb 2024 15:29:57 +0100
 Subject: [PATCH] add biome change per player
 
 
+diff --git a/src/main/java/net/minecraft/network/protocol/game/ClientboundChunksBiomesPacket.java b/src/main/java/net/minecraft/network/protocol/game/ClientboundChunksBiomesPacket.java
+index 51f647de153255c919b1440338cf1b3e2d6b5dbf..c67f600cb74c7b9b747af55c7015f2a8ff0ce6d2 100644
+--- a/src/main/java/net/minecraft/network/protocol/game/ClientboundChunksBiomesPacket.java
++++ b/src/main/java/net/minecraft/network/protocol/game/ClientboundChunksBiomesPacket.java
+@@ -2,12 +2,20 @@ package net.minecraft.network.protocol.game;
+ 
+ import io.netty.buffer.ByteBuf;
+ import io.netty.buffer.Unpooled;
++import io.papermc.paper.event.packet.PlayerBiomesLoadEvent;
++import java.util.Arrays;
+ import java.util.List;
++import net.minecraft.core.Holder;
+ import net.minecraft.network.FriendlyByteBuf;
+ import net.minecraft.network.protocol.Packet;
++import net.minecraft.world.entity.player.Player;
+ import net.minecraft.world.level.ChunkPos;
++import net.minecraft.world.level.biome.Biome;
+ import net.minecraft.world.level.chunk.LevelChunk;
+ import net.minecraft.world.level.chunk.LevelChunkSection;
++import net.minecraft.world.level.chunk.PalettedContainer;
++import org.bukkit.BiomesSnapshot;
++import org.bukkit.craftbukkit.CraftBiomesSnapshot;
+ 
+ public record ClientboundChunksBiomesPacket(List<ClientboundChunksBiomesPacket.ChunkBiomeData> chunkBiomeData) implements Packet<ClientGamePacketListener> {
+     private static final int TWO_MEGABYTES = 2097152;
+@@ -16,7 +24,14 @@ public record ClientboundChunksBiomesPacket(List<ClientboundChunksBiomesPacket.C
+         this(buf.readList(ClientboundChunksBiomesPacket.ChunkBiomeData::new));
+     }
+ 
+-    public static ClientboundChunksBiomesPacket forChunks(List<LevelChunk> chunks) {
++    public static ClientboundChunksBiomesPacket forChunks(Player player, List<LevelChunk> chunks) {
++
++        final PlayerBiomesLoadEvent biomesLoadEvent = new PlayerBiomesLoadEvent((org.bukkit.entity.Player) player.getBukkitEntity());
++        biomesLoadEvent.callEvent();
++        if(biomesLoadEvent.getBiomeSnapshot() != null) {
++            final ChunkBiomeData biomeData = new ChunkBiomeData(biomesLoadEvent.getBiomeSnapshot());
++        }
++
+         return new ClientboundChunksBiomesPacket(chunks.stream().map(ClientboundChunksBiomesPacket.ChunkBiomeData::new).toList());
+     }
+ 
+@@ -38,6 +53,11 @@ public record ClientboundChunksBiomesPacket(List<ClientboundChunksBiomesPacket.C
+             extractChunkData(new FriendlyByteBuf(this.getWriteBuffer()), chunk);
+         }
+ 
++        public ChunkBiomeData(BiomesSnapshot biomesSnapshot) {
++            this(ChunkPos.minFromRegion(biomesSnapshot.getX(), biomesSnapshot.getZ()), new byte[calculateChunkSize(biomesSnapshot)]);
++            extractBiomesSnapshot(new FriendlyByteBuf(this.getWriteBuffer()), biomesSnapshot);
++        }
++
+         public ChunkBiomeData(FriendlyByteBuf buf) {
+             this(buf.readChunkPos(), buf.readByteArray(2097152));
+         }
+@@ -71,6 +91,25 @@ public record ClientboundChunksBiomesPacket(List<ClientboundChunksBiomesPacket.C
+ 
+         }
+ 
++        public static void extractBiomesSnapshot(FriendlyByteBuf buf, BiomesSnapshot biomesSnapshot) {
++            int chunkSectionIndex = 0; // Paper - Anti-Xray
++            for (final PalettedContainer<Holder<Biome>> container : ((CraftBiomesSnapshot) biomesSnapshot).getBiome()) {
++                container.write(buf, null, chunkSectionIndex);
++                chunkSectionIndex++; // Paper - Anti-Xray
++            }
++        }
++
++        private static int calculateChunkSize(BiomesSnapshot biomesSnapshot) {
++            int i = 0;
++
++            for(final PalettedContainer<Holder<Biome>> container : ((CraftBiomesSnapshot) biomesSnapshot).getBiome()) {
++                i += container.getSerializedSize();
++            }
++
++            return i;
++        }
++
++
+         public void write(FriendlyByteBuf buf) {
+             buf.writeChunkPos(this.pos);
+             buf.writeByteArray(this.buffer);
+diff --git a/src/main/java/net/minecraft/server/level/ChunkMap.java b/src/main/java/net/minecraft/server/level/ChunkMap.java
+index 12109446fc76a39faee6cda042ca48b3fd3809f4..52c3bd12fbf38713c0e99158a202253c88837502 100644
+--- a/src/main/java/net/minecraft/server/level/ChunkMap.java
++++ b/src/main/java/net/minecraft/server/level/ChunkMap.java
+@@ -1260,7 +1260,7 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
+         }
+ 
+         map.forEach((entityplayer1, list1) -> {
+-            entityplayer1.connection.send(ClientboundChunksBiomesPacket.forChunks(list1));
++            entityplayer1.connection.send(ClientboundChunksBiomesPacket.forChunks(entityplayer1, list1));
+         });
+     }
+ 
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftBiomesSnapshot.java b/src/main/java/org/bukkit/craftbukkit/CraftBiomesSnapshot.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..9ace0b4ca19afa70501f6339b59f379270f25284
+index 0000000000000000000000000000000000000000..56215b14623d8f475dbab368cd49e84c8c5c3bcf
 --- /dev/null
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftBiomesSnapshot.java
-@@ -0,0 +1,100 @@
+@@ -0,0 +1,104 @@
 +package org.bukkit.craftbukkit;
 +
 +import com.google.common.base.Preconditions;
@@ -100,6 +192,10 @@ index 0000000000000000000000000000000000000000..9ace0b4ca19afa70501f6339b59f3792
 +        }
 +
 +        return false;
++    }
++
++    public PalettedContainer<Holder<net.minecraft.world.level.biome.Biome>>[] getBiome(){
++        return biome;
 +    }
 +
 +    protected void validateChunkCoordinates(int x, int y, int z) {

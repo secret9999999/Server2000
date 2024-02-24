@@ -6,10 +6,10 @@ Subject: [PATCH] add biome change per player
 
 diff --git a/src/main/java/io/papermc/paper/event/packet/PlayerBiomesLoadEvent.java b/src/main/java/io/papermc/paper/event/packet/PlayerBiomesLoadEvent.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..63c9b8e756ad3b39b793b82274b6108558031145
+index 0000000000000000000000000000000000000000..3169868d75ce36a524db2b0df920b9f628d4fd40
 --- /dev/null
 +++ b/src/main/java/io/papermc/paper/event/packet/PlayerBiomesLoadEvent.java
-@@ -0,0 +1,52 @@
+@@ -0,0 +1,67 @@
 +package io.papermc.paper.event.packet;
 +
 +import org.bukkit.BiomesSnapshot;
@@ -50,14 +50,29 @@ index 0000000000000000000000000000000000000000..63c9b8e756ad3b39b793b82274b61085
 +        return HANDLER_LIST;
 +    }
 +
++    /**
++     * Returns the player that is receiving the biomes
++     *
++     * @return the player
++     */
 +    public @NotNull Player getPlayer() {
 +        return player;
 +    }
 +
++    /**
++     * Returns a biomes snapshot, by default it won't be set.
++     *
++     * @return biome snapshot if one is set
++     */
 +    public @Nullable BiomesSnapshot getBiomeSnapshot() {
 +        return biomeSnapshot;
 +    }
 +
++    /**
++     * Sets the biome snapshot that will be send as an override to the player
++     *
++     * @param biomeSnapshot the biome override
++     */
 +    public void setBiomeSnapshot(@Nullable final BiomesSnapshot biomeSnapshot) {
 +        this.biomeSnapshot = biomeSnapshot;
 +    }
