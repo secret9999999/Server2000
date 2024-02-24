@@ -6,16 +6,20 @@ Subject: [PATCH] add biome change per player
 
 diff --git a/src/main/java/io/papermc/paper/event/packet/PlayerBiomesLoadEvent.java b/src/main/java/io/papermc/paper/event/packet/PlayerBiomesLoadEvent.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..3169868d75ce36a524db2b0df920b9f628d4fd40
+index 0000000000000000000000000000000000000000..8f19181f54c3e82e9c51101b8f56255fc6668d00
 --- /dev/null
 +++ b/src/main/java/io/papermc/paper/event/packet/PlayerBiomesLoadEvent.java
-@@ -0,0 +1,67 @@
+@@ -0,0 +1,82 @@
 +package io.papermc.paper.event.packet;
 +
++import java.util.HashMap;
++import java.util.Map;
 +import org.bukkit.BiomesSnapshot;
++import org.bukkit.Chunk;
++import org.bukkit.World;
 +import org.bukkit.entity.Player;
-+import org.bukkit.event.Event;
 +import org.bukkit.event.HandlerList;
++import org.bukkit.event.world.WorldEvent;
 +import org.jetbrains.annotations.ApiStatus;
 +import org.jetbrains.annotations.NotNull;
 +import org.jetbrains.annotations.Nullable;
@@ -28,15 +32,16 @@ index 0000000000000000000000000000000000000000..3169868d75ce36a524db2b0df920b9f6
 + * Should only be used for packet/clientside related stuff.
 + * Not intended for modifying server side state.
 + */
-+public class PlayerBiomesLoadEvent extends Event {
++public class PlayerBiomesLoadEvent extends WorldEvent {
 +
 +    private static final HandlerList HANDLER_LIST = new HandlerList();
 +
 +    private final Player player;
-+    private BiomesSnapshot biomeSnapshot;
++    private final Map<Chunk, BiomesSnapshot> chunkBiomesSnapshots = new HashMap<>();
 +
 +    @ApiStatus.Internal
-+    public PlayerBiomesLoadEvent(@NotNull final Player player) {
++    public PlayerBiomesLoadEvent(@NotNull final Player player, World world) {
++        super(world);
 +        this.player = player;
 +    }
 +
@@ -60,21 +65,31 @@ index 0000000000000000000000000000000000000000..3169868d75ce36a524db2b0df920b9f6
 +    }
 +
 +    /**
-+     * Returns a biomes snapshot, by default it won't be set.
++     * Returns a biomes snapshot for the given chunk, by default it won't be set.
 +     *
++     * @param chunk the given chunk
 +     * @return biome snapshot if one is set
 +     */
-+    public @Nullable BiomesSnapshot getBiomeSnapshot() {
-+        return biomeSnapshot;
++    public @Nullable BiomesSnapshot getBiomeSnapshotAt(@NotNull Chunk chunk) {
++        return chunkBiomesSnapshots.get(chunk);
 +    }
 +
 +    /**
-+     * Sets the biome snapshot that will be send as an override to the player
++     * Sets the biome snapshot for the given chunk that will be send as an override to the player
 +     *
-+     * @param biomeSnapshot the biome override
++     * @param biomesSnapshot the biome override
 +     */
-+    public void setBiomeSnapshot(@Nullable final BiomesSnapshot biomeSnapshot) {
-+        this.biomeSnapshot = biomeSnapshot;
++    public void setBiomeSnapshot(@NotNull Chunk chunk, @Nullable final BiomesSnapshot biomesSnapshot) {
++        this.chunkBiomesSnapshots.put(chunk, biomesSnapshot);
++    }
++
++    /**
++     * Returns if chunk biomes were overridden
++     *
++     * @return true if override was made, else false
++     */
++    public boolean hasOverrides() {
++        return !this.chunkBiomesSnapshots.isEmpty();
 +    }
 +}
 diff --git a/src/main/java/org/bukkit/BiomesSnapshot.java b/src/main/java/org/bukkit/BiomesSnapshot.java

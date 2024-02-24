@@ -5,10 +5,10 @@ Subject: [PATCH] add biome change per player
 
 
 diff --git a/src/main/java/net/minecraft/network/protocol/game/ClientboundChunksBiomesPacket.java b/src/main/java/net/minecraft/network/protocol/game/ClientboundChunksBiomesPacket.java
-index 51f647de153255c919b1440338cf1b3e2d6b5dbf..c67f600cb74c7b9b747af55c7015f2a8ff0ce6d2 100644
+index 51f647de153255c919b1440338cf1b3e2d6b5dbf..f525c51a1c888f76fa56528f204e4fac52416641 100644
 --- a/src/main/java/net/minecraft/network/protocol/game/ClientboundChunksBiomesPacket.java
 +++ b/src/main/java/net/minecraft/network/protocol/game/ClientboundChunksBiomesPacket.java
-@@ -2,12 +2,20 @@ package net.minecraft.network.protocol.game;
+@@ -2,12 +2,22 @@ package net.minecraft.network.protocol.game;
  
  import io.netty.buffer.ByteBuf;
  import io.netty.buffer.Unpooled;
@@ -25,27 +25,39 @@ index 51f647de153255c919b1440338cf1b3e2d6b5dbf..c67f600cb74c7b9b747af55c7015f2a8
  import net.minecraft.world.level.chunk.LevelChunkSection;
 +import net.minecraft.world.level.chunk.PalettedContainer;
 +import org.bukkit.BiomesSnapshot;
++import org.bukkit.Chunk;
 +import org.bukkit.craftbukkit.CraftBiomesSnapshot;
++import org.bukkit.craftbukkit.CraftChunk;
  
  public record ClientboundChunksBiomesPacket(List<ClientboundChunksBiomesPacket.ChunkBiomeData> chunkBiomeData) implements Packet<ClientGamePacketListener> {
      private static final int TWO_MEGABYTES = 2097152;
-@@ -16,7 +24,14 @@ public record ClientboundChunksBiomesPacket(List<ClientboundChunksBiomesPacket.C
+@@ -16,8 +26,23 @@ public record ClientboundChunksBiomesPacket(List<ClientboundChunksBiomesPacket.C
          this(buf.readList(ClientboundChunksBiomesPacket.ChunkBiomeData::new));
      }
  
 -    public static ClientboundChunksBiomesPacket forChunks(List<LevelChunk> chunks) {
+-        return new ClientboundChunksBiomesPacket(chunks.stream().map(ClientboundChunksBiomesPacket.ChunkBiomeData::new).toList());
 +    public static ClientboundChunksBiomesPacket forChunks(Player player, List<LevelChunk> chunks) {
-+
-+        final PlayerBiomesLoadEvent biomesLoadEvent = new PlayerBiomesLoadEvent((org.bukkit.entity.Player) player.getBukkitEntity());
++        org.bukkit.entity.Player bukkitPlayer = (org.bukkit.entity.Player) player.getBukkitEntity();
++        final PlayerBiomesLoadEvent biomesLoadEvent = new PlayerBiomesLoadEvent(bukkitPlayer, bukkitPlayer.getWorld());
 +        biomesLoadEvent.callEvent();
-+        if(biomesLoadEvent.getBiomeSnapshot() != null) {
-+            final ChunkBiomeData biomeData = new ChunkBiomeData(biomesLoadEvent.getBiomeSnapshot());
++        if(biomesLoadEvent.hasOverrides()) {
++            return new ClientboundChunksBiomesPacket(chunks.stream().map(levelChunk -> create(levelChunk, biomesLoadEvent)).toList());
++        } else {
++            return new ClientboundChunksBiomesPacket(chunks.stream().map(ClientboundChunksBiomesPacket.ChunkBiomeData::new).toList());
 +        }
++    }
 +
-         return new ClientboundChunksBiomesPacket(chunks.stream().map(ClientboundChunksBiomesPacket.ChunkBiomeData::new).toList());
++    private static ClientboundChunksBiomesPacket.ChunkBiomeData create(LevelChunk levelChunk, PlayerBiomesLoadEvent biomesLoadEvent) {
++        final BiomesSnapshot snapshotAt = biomesLoadEvent.getBiomeSnapshotAt(new CraftChunk(levelChunk));
++        if(snapshotAt != null){
++            return new ClientboundChunksBiomesPacket.ChunkBiomeData(snapshotAt);
++        }
++        return new ClientboundChunksBiomesPacket.ChunkBiomeData(levelChunk);
      }
  
-@@ -38,6 +53,11 @@ public record ClientboundChunksBiomesPacket(List<ClientboundChunksBiomesPacket.C
+     @Override
+@@ -38,6 +63,11 @@ public record ClientboundChunksBiomesPacket(List<ClientboundChunksBiomesPacket.C
              extractChunkData(new FriendlyByteBuf(this.getWriteBuffer()), chunk);
          }
  
@@ -57,7 +69,7 @@ index 51f647de153255c919b1440338cf1b3e2d6b5dbf..c67f600cb74c7b9b747af55c7015f2a8
          public ChunkBiomeData(FriendlyByteBuf buf) {
              this(buf.readChunkPos(), buf.readByteArray(2097152));
          }
-@@ -71,6 +91,25 @@ public record ClientboundChunksBiomesPacket(List<ClientboundChunksBiomesPacket.C
+@@ -71,6 +101,25 @@ public record ClientboundChunksBiomesPacket(List<ClientboundChunksBiomesPacket.C
  
          }
  
