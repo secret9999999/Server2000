@@ -6,7 +6,7 @@ Subject: [PATCH] add biome change per player
 
 diff --git a/src/main/java/io/papermc/paper/event/packet/PlayerBiomesLoadEvent.java b/src/main/java/io/papermc/paper/event/packet/PlayerBiomesLoadEvent.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..8f19181f54c3e82e9c51101b8f56255fc6668d00
+index 0000000000000000000000000000000000000000..7774a3e3b19bfcaae319ea9ee03e85091be03a8b
 --- /dev/null
 +++ b/src/main/java/io/papermc/paper/event/packet/PlayerBiomesLoadEvent.java
 @@ -0,0 +1,82 @@
@@ -19,6 +19,7 @@ index 0000000000000000000000000000000000000000..8f19181f54c3e82e9c51101b8f56255f
 +import org.bukkit.World;
 +import org.bukkit.entity.Player;
 +import org.bukkit.event.HandlerList;
++import org.bukkit.event.world.ChunkEvent;
 +import org.bukkit.event.world.WorldEvent;
 +import org.jetbrains.annotations.ApiStatus;
 +import org.jetbrains.annotations.NotNull;
@@ -32,16 +33,16 @@ index 0000000000000000000000000000000000000000..8f19181f54c3e82e9c51101b8f56255f
 + * Should only be used for packet/clientside related stuff.
 + * Not intended for modifying server side state.
 + */
-+public class PlayerBiomesLoadEvent extends WorldEvent {
++public class PlayerBiomesLoadEvent extends ChunkEvent {
 +
 +    private static final HandlerList HANDLER_LIST = new HandlerList();
 +
 +    private final Player player;
-+    private final Map<Chunk, BiomesSnapshot> chunkBiomesSnapshots = new HashMap<>();
++    private BiomesSnapshot biomesSnapshot;
 +
 +    @ApiStatus.Internal
-+    public PlayerBiomesLoadEvent(@NotNull final Player player, World world) {
-+        super(world);
++    public PlayerBiomesLoadEvent(@NotNull final Player player, Chunk chunk) {
++        super(chunk);
 +        this.player = player;
 +    }
 +
@@ -67,20 +68,19 @@ index 0000000000000000000000000000000000000000..8f19181f54c3e82e9c51101b8f56255f
 +    /**
 +     * Returns a biomes snapshot for the given chunk, by default it won't be set.
 +     *
-+     * @param chunk the given chunk
 +     * @return biome snapshot if one is set
 +     */
-+    public @Nullable BiomesSnapshot getBiomeSnapshotAt(@NotNull Chunk chunk) {
-+        return chunkBiomesSnapshots.get(chunk);
++    public @Nullable BiomesSnapshot getBiomeSnapshot() {
++        return biomesSnapshot;
 +    }
 +
 +    /**
-+     * Sets the biome snapshot for the given chunk that will be send as an override to the player
++     * Sets the biome snapshot for the given chunk that will be sent as an override to the player
 +     *
 +     * @param biomesSnapshot the biome override
 +     */
-+    public void setBiomeSnapshot(@NotNull Chunk chunk, @Nullable final BiomesSnapshot biomesSnapshot) {
-+        this.chunkBiomesSnapshots.put(chunk, biomesSnapshot);
++    public void setBiomeSnapshot(@Nullable final BiomesSnapshot biomesSnapshot) {
++        this.biomesSnapshot = biomesSnapshot;
 +    }
 +
 +    /**
@@ -89,9 +89,31 @@ index 0000000000000000000000000000000000000000..8f19181f54c3e82e9c51101b8f56255f
 +     * @return true if override was made, else false
 +     */
 +    public boolean hasOverrides() {
-+        return !this.chunkBiomesSnapshots.isEmpty();
++        return biomesSnapshot != null;
 +    }
 +}
+diff --git a/src/main/java/io/papermc/paper/event/packet/PlayerChunkLoadEvent.java b/src/main/java/io/papermc/paper/event/packet/PlayerChunkLoadEvent.java
+index 3ddbc099a13df939b3912f30b54e7635840ba5a4..2933de0e9455720040619e52b7d4df66b5dbb717 100644
+--- a/src/main/java/io/papermc/paper/event/packet/PlayerChunkLoadEvent.java
++++ b/src/main/java/io/papermc/paper/event/packet/PlayerChunkLoadEvent.java
+@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
+  * Should only be used for packet/clientside related stuff.
+  * Not intended for modifying server side state.
+  */
+-public class PlayerChunkLoadEvent extends ChunkEvent {
++public class PlayerChunkLoadEvent extends PlayerBiomesLoadEvent {
+ 
+     private static final HandlerList HANDLER_LIST = new HandlerList();
+ 
+@@ -23,7 +23,7 @@ public class PlayerChunkLoadEvent extends ChunkEvent {
+ 
+     @ApiStatus.Internal
+     public PlayerChunkLoadEvent(@NotNull Chunk chunk, @NotNull Player player) {
+-        super(chunk);
++        super(player, chunk);
+         this.player = player;
+     }
+ 
 diff --git a/src/main/java/org/bukkit/BiomesSnapshot.java b/src/main/java/org/bukkit/BiomesSnapshot.java
 new file mode 100644
 index 0000000000000000000000000000000000000000..bb8683127eca2b86b23efa81bff9c54a357e04d4
