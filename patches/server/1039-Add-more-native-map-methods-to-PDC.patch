@@ -1,0 +1,389 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Xander <xander.dekeijzer@student.hu.nl>
+Co-authored-by: TheRealRyGuy <ryan@ryguy.me>
+Date: Sun, 15 Oct 2023 17:44:38 +0200
+Subject: [PATCH] Add more native map methods to PDC
+
+
+diff --git a/src/main/java/org/bukkit/craftbukkit/persistence/CraftPersistentDataContainer.java b/src/main/java/org/bukkit/craftbukkit/persistence/CraftPersistentDataContainer.java
+index 91cb4a28afa5d83e6de10dab834ed63e2eb3b76f..7347115d3c03f5bcd7570f034c60190752806abc 100644
+--- a/src/main/java/org/bukkit/craftbukkit/persistence/CraftPersistentDataContainer.java
++++ b/src/main/java/org/bukkit/craftbukkit/persistence/CraftPersistentDataContainer.java
+@@ -34,6 +34,13 @@ public class CraftPersistentDataContainer implements PersistentDataContainer {
+ 
+     @Override
+     public <T, Z> void set(NamespacedKey key, PersistentDataType<T, Z> type, Z value) {
++        // Paper start
++        put(key, type, value);
++    }
++    
++    @Override
++    public <T, Z> void put(net.kyori.adventure.key.Key key, PersistentDataType<T, Z> type, Z value) {
++        // Paper end
+         Preconditions.checkArgument(key != null, "The NamespacedKey key cannot be null");
+         Preconditions.checkArgument(type != null, "The provided type cannot be null");
+         Preconditions.checkArgument(value != null, "The provided value cannot be null");
+@@ -43,6 +50,13 @@ public class CraftPersistentDataContainer implements PersistentDataContainer {
+ 
+     @Override
+     public <T, Z> boolean has(NamespacedKey key, PersistentDataType<T, Z> type) {
++        // Paper start
++        return has((net.kyori.adventure.key.Key) key, type);
++    }
++
++    @Override
++    public <T, Z> boolean has(net.kyori.adventure.key.Key key, PersistentDataType<T, Z> type) {
++        // Paper end
+         Preconditions.checkArgument(key != null, "The NamespacedKey key cannot be null");
+         Preconditions.checkArgument(type != null, "The provided type cannot be null");
+ 
+@@ -56,6 +70,13 @@ public class CraftPersistentDataContainer implements PersistentDataContainer {
+ 
+     @Override
+     public <T, Z> Z get(NamespacedKey key, PersistentDataType<T, Z> type) {
++        // Paper start
++        return get((net.kyori.adventure.key.Key) key, type);
++    }
++
++    @Override
++    public <T, Z> Z get(net.kyori.adventure.key.Key key, PersistentDataType<T, Z> type) {
++        // Paper end
+         Preconditions.checkArgument(key != null, "The NamespacedKey key cannot be null");
+         Preconditions.checkArgument(type != null, "The provided type cannot be null");
+ 
+@@ -69,6 +90,12 @@ public class CraftPersistentDataContainer implements PersistentDataContainer {
+ 
+     @Override
+     public <T, Z> Z getOrDefault(NamespacedKey key, PersistentDataType<T, Z> type, Z defaultValue) {
++        // Paper start
++        return getOrDefault((net.kyori.adventure.key.Key) key, type, defaultValue);
++    }
++    
++    @Override
++    public <T, Z> Z getOrDefault(net.kyori.adventure.key.Key key, PersistentDataType<T, Z> type, Z defaultValue) {
+         Z z = this.get(key, type);
+         return z != null ? z : defaultValue;
+     }
+@@ -89,6 +116,13 @@ public class CraftPersistentDataContainer implements PersistentDataContainer {
+ 
+     @Override
+     public void remove(NamespacedKey key) {
++        // Paper start
++        remove((net.kyori.adventure.key.Key) key);
++    }
++
++    @Override
++    public void remove(net.kyori.adventure.key.Key key) {
++        // Paper end
+         Preconditions.checkArgument(key != null, "The NamespacedKey key cannot be null");
+ 
+         this.customDataTags.remove(key.toString());
+@@ -161,9 +195,146 @@ public class CraftPersistentDataContainer implements PersistentDataContainer {
+     public void clear() {
+         this.customDataTags.clear();
+     }
++    
++    @Override
++    public <T, Z> void putIfAbsent(net.kyori.adventure.key.Key key, PersistentDataType<T, Z> type, Z value) {
++        Preconditions.checkArgument(key != null, "The key cannot be null");
++        Preconditions.checkArgument(type != null, "The provided type cannot be null");
++        Preconditions.checkArgument(value != null, "The provided value cannot be null");
++        
++        Z z = get(key, type);
++        if (z == null) {
++            put(key, type, value);
++        }
++    }
++    
++    @Override
++    public <T, Z> Z computeIfAbsent(net.kyori.adventure.key.Key key, PersistentDataType<T, Z> type, java.util.function.Function<? super net.kyori.adventure.key.Key, ? extends Z> mappingFunction) {
++        Preconditions.checkArgument(key != null, "The key cannot be null");
++        Preconditions.checkArgument(type != null, "The provided type cannot be null");
++        Preconditions.checkArgument(mappingFunction != null, "The provided mappingFunction cannot be null");
++        
++        Z z;
++        if ((z = get(key, type)) == null) {
++            Z newValue;
++            if ((newValue = mappingFunction.apply(key)) != null) {
++                put(key, type, newValue);
++                return newValue;
++            }
++        }
++
++        return z;
++    }
++
++    @Override
++    public <T, Z> Z computeIfPresent(net.kyori.adventure.key.Key key, PersistentDataType<T, Z> type, java.util.function.BiFunction<? super net.kyori.adventure.key.Key, ? super Z, ? extends Z> remappingFunction) {
++        Preconditions.checkArgument(key != null, "The key cannot be null");
++        Preconditions.checkArgument(type != null, "The provided type cannot be null");
++        Preconditions.checkArgument(remappingFunction != null, "The provided remappingFunction cannot be null");
++        
++        Z oldValue;
++        if ((oldValue = get(key, type)) != null) {
++            Z newValue = remappingFunction.apply(key, oldValue);
++            if (newValue != null) {
++                put(key, type, newValue);
++                return newValue;
++            } else {
++                remove(key);
++                return null;
++            }
++        } else {
++            return null;
++        }
++    }
++
++    @Override
++    public <T, Z> Z compute(net.kyori.adventure.key.Key key, PersistentDataType<T, Z> type, java.util.function.BiFunction<? super net.kyori.adventure.key.Key, ? super Z, ? extends Z> remappingFunction) {
++        Preconditions.checkArgument(key != null, "The key cannot be null");
++        Preconditions.checkArgument(type != null, "The provided type cannot be null");
++        Preconditions.checkArgument(remappingFunction != null, "The provided remappingFunction cannot be null");
++        
++        Z oldValue = get(key, type);
++
++        Z newValue = remappingFunction.apply(key, oldValue);
++        if (newValue == null) {
++            if (oldValue != null || has(key, type)) {
++                remove(key);
++                return null;
++            } else {
++                return null;
++            }
++        } else {
++            put(key, type, newValue);
++            return newValue;
++        }
++    }
++
++    @Override
++    public <T, Z, X extends Throwable> Z getOrThrow(net.kyori.adventure.key.Key key, PersistentDataType<T, Z> type, java.util.function.Supplier<X> exceptionSupplier) throws X {
++        Preconditions.checkArgument(key != null, "The key cannot be null");
++        Preconditions.checkArgument(type != null, "The provided type cannot be null");
++        Preconditions.checkArgument(exceptionSupplier != null, "The provided exceptionSupplier cannot be null");
++        
++        Z value = get(key, type);
++        if (value == null) {
++            throw exceptionSupplier.get();
++        } else {
++            return value;
++        }
++    }
++
++    @Override
++    public <T, Z> boolean replace(net.kyori.adventure.key.Key key, PersistentDataType<T, Z> type, Z oldValue, Z newValue) {
++        Preconditions.checkArgument(key != null, "The key cannot be null");
++        Preconditions.checkArgument(type != null, "The provided type cannot be null");
++        Preconditions.checkArgument(oldValue != null, "The provided oldValue cannot be null");
++        Preconditions.checkArgument(newValue != null, "The provided newValue cannot be null");
++        
++        Z curValue = get(key, type);
++        if (!Objects.equals(curValue, oldValue) || (curValue == null && !has(key))) {
++            return false;
++        }
++        put(key, type, newValue);
++        return true;
++    }
++
++    @Override
++    public <T, Z> Z replace(net.kyori.adventure.key.Key key, PersistentDataType<T, Z> type, Z value) {
++        Preconditions.checkArgument(key != null, "The key cannot be null");
++        Preconditions.checkArgument(type != null, "The provided type cannot be null");
++        Preconditions.checkArgument(value != null, "The provided value cannot be null");
++        
++        Z curvalue;
++        if (((curvalue = get(key, type)) != null) || has(key)) {
++            put(key, type, value);
++        }
++        return curvalue;
++    }
++
++    @Override
++    public <T, Z> Z merge(net.kyori.adventure.key.Key key, PersistentDataType<T, Z> type, Z value, java.util.function.BiFunction<? super Z, ? super Z, ? extends Z> remappingFunction) {
++        Preconditions.checkArgument(key != null, "The key cannot be null");
++        Preconditions.checkArgument(type != null, "The provided type cannot be null");
++        Preconditions.checkArgument(value != null, "The provided value cannot be null");
++        Preconditions.checkArgument(remappingFunction != null, "The provided remappingFunction cannot be null");
++        
++        Z oldValue = get(key, type);
++        Z newValue = (oldValue == null) ? value : remappingFunction.apply(oldValue, value);
++        if (newValue == null) {
++            remove(key);
++        } else {
++            put(key, type, newValue);
++        }
++        return newValue;
++    }
+ 
+     @Override
+     public boolean has(NamespacedKey key) {
++        return has((net.kyori.adventure.key.Key) key);
++    }
++    
++    @Override
++    public boolean has(net.kyori.adventure.key.Key key) {
+         Preconditions.checkArgument(key != null, "The provided key for the custom value was null");
+ 
+         return this.customDataTags.containsKey(key.toString());
+diff --git a/src/test/java/io/papermc/paper/persistence/PersistentDataContainerTest.java b/src/test/java/io/papermc/paper/persistence/PersistentDataContainerTest.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..e5a5dda6fb46aa58cd0e0b1235a0b121f7d0c66e
+--- /dev/null
++++ b/src/test/java/io/papermc/paper/persistence/PersistentDataContainerTest.java
+@@ -0,0 +1,156 @@
++package io.papermc.paper.persistence;
++
++import net.kyori.adventure.key.Key;
++import org.bukkit.NamespacedKey;
++import org.bukkit.craftbukkit.persistence.CraftPersistentDataContainer;
++import org.bukkit.craftbukkit.persistence.CraftPersistentDataTypeRegistry;
++import org.bukkit.persistence.PersistentDataType;
++import org.junit.jupiter.api.Test;
++
++import java.util.NoSuchElementException;
++import java.util.function.Supplier;
++
++import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
++import static org.junit.jupiter.api.Assertions.assertEquals;
++import static org.junit.jupiter.api.Assertions.assertNotEquals;
++import static org.junit.jupiter.api.Assertions.assertNull;
++import static org.junit.jupiter.api.Assertions.assertThrows;
++import static org.junit.jupiter.api.Assertions.assertTrue;
++import static org.junit.jupiter.api.Assertions.assertFalse;
++
++public class PersistentDataContainerTest {
++    
++    static private CraftPersistentDataContainer createContainer() {
++        CraftPersistentDataTypeRegistry registry = new CraftPersistentDataTypeRegistry();
++        CraftPersistentDataContainer container = new CraftPersistentDataContainer(registry);
++        return container;
++    }
++    
++    @Test
++    public void basicTest() {
++        CraftPersistentDataContainer container = createContainer();
++        Key key = new NamespacedKey("test", "key");
++        
++        container.put(key, PersistentDataType.STRING, "value");
++        assertTrue(container.has(key));
++        
++        String value = container.get(key, PersistentDataType.STRING);
++        assertEquals(value, "value");
++        
++        container.remove(key);
++        assertFalse(container.has(key));
++    }
++    
++    @Test
++    public void putIfAbsentTest() {
++        CraftPersistentDataContainer container = createContainer();
++        Key key = new NamespacedKey("test", "key");
++        
++        container.putIfAbsent(key, PersistentDataType.STRING, "value");
++        String value = container.get(key, PersistentDataType.STRING);
++        assertEquals(value, "value");
++        
++        container.putIfAbsent(key, PersistentDataType.STRING, "value2");
++        String value2 = container.get(key, PersistentDataType.STRING);
++        assertNotEquals(value2, "value2");
++        assertEquals(value2, "value");
++    }
++    
++    @Test
++    public void computeIfAbsentTest() {
++        CraftPersistentDataContainer container = createContainer();
++        Key key = new NamespacedKey("test", "key");
++        
++        assertNull(container.computeIfAbsent(key, PersistentDataType.STRING, (Key _key) -> null));
++        assertFalse(container.has(key));
++
++        assertEquals(container.computeIfAbsent(key, PersistentDataType.STRING, (Key _key) -> "value"), "value");
++        assertEquals(container.get(key, PersistentDataType.STRING), "value");
++
++        assertEquals(container.computeIfAbsent(key, PersistentDataType.STRING, (Key _key) -> "value2"), "value");
++        assertEquals(container.get(key, PersistentDataType.STRING), "value");
++    }
++    
++    @Test
++    public void computeIfPresentTest() {
++        CraftPersistentDataContainer container = createContainer();
++        Key key = new NamespacedKey("test", "key");
++        
++        container.computeIfPresent(key, PersistentDataType.STRING, (Key _key, String _value) -> "value2");
++        assertFalse(container.has(key));
++        
++        container.put(key, PersistentDataType.STRING, "value");
++        container.computeIfPresent(key, PersistentDataType.STRING, (Key _key, String _value) -> "value2");
++        assertEquals(container.get(key, PersistentDataType.STRING), "value2");
++        
++        container.computeIfPresent(key, PersistentDataType.STRING, (Key _key, String _value) -> null);
++        assertFalse(container.has(key));
++    }
++    
++    @Test
++    public void computeTest() {
++        CraftPersistentDataContainer container = createContainer();
++        Key key = new NamespacedKey("test", "key");
++        
++        assertEquals(container.compute(key, PersistentDataType.STRING, (Key _key, String _value) -> "value"), "value");
++        assertEquals(container.get(key, PersistentDataType.STRING), "value");
++
++        assertEquals(container.compute(key, PersistentDataType.STRING, (Key _key, String _value) -> "value2"), "value2");
++        assertEquals(container.get(key, PersistentDataType.STRING), "value2");
++
++        assertNull(container.compute(key, PersistentDataType.STRING, (Key _key, String _value) -> null));
++        assertFalse(container.has(key));
++    }
++    
++    @Test
++    public void getOrThrowTest() {
++        CraftPersistentDataContainer container = createContainer();
++        Key key = new NamespacedKey("test", "key");
++        
++        assertThrows(NoSuchElementException.class, () -> container.getOrThrow(key, PersistentDataType.STRING));
++        assertThrows(NoSuchElementException.class, () -> container.getOrThrow(key, PersistentDataType.STRING, NoSuchElementException::new));
++        
++        container.put(key, PersistentDataType.STRING, "value");
++        
++        assertDoesNotThrow(() -> container.getOrThrow(key, PersistentDataType.STRING));
++        assertDoesNotThrow(() -> container.getOrThrow(key, PersistentDataType.STRING, NoSuchElementException::new));
++    }
++    
++    @Test
++    public void replaceTest() {
++        CraftPersistentDataContainer container = createContainer();
++        Key key = new NamespacedKey("test", "key");
++        
++        assertFalse(container.replace(key, PersistentDataType.STRING, "value", "value2"));
++        assertFalse(container.has(key));
++        
++        assertNull(container.replace(key, PersistentDataType.STRING, "value2"));
++        assertFalse(container.has(key));
++        
++        container.put(key, PersistentDataType.STRING, "value");
++        
++        assertFalse(container.replace(key, PersistentDataType.STRING, "value2", "value"));
++        assertEquals(container.get(key, PersistentDataType.STRING), "value");
++        
++        assertTrue(container.replace(key, PersistentDataType.STRING, "value", "value2"));
++        assertEquals(container.get(key, PersistentDataType.STRING), "value2");
++        
++        assertEquals(container.replace(key, PersistentDataType.STRING, "value"), "value2");
++    }
++    
++    @Test
++    public void mergeTest() {
++        CraftPersistentDataContainer container = createContainer();
++        Key key = new NamespacedKey("test", "key");
++        
++        assertEquals(container.merge(key, PersistentDataType.STRING, "value", (String cur, String val) -> "value2"), "value");
++        assertEquals(container.get(key, PersistentDataType.STRING), "value");
++        
++        assertEquals(container.merge(key, PersistentDataType.STRING, "value", (String cur, String val) -> "value2"), "value2");
++        assertEquals(container.get(key, PersistentDataType.STRING), "value2");
++        
++        assertNull(container.merge(key, PersistentDataType.STRING, "value", (String cur, String val) -> null));
++        assertFalse(container.has(key));
++    }
++    
++}
