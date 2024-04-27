@@ -17,6 +17,8 @@ import org.bukkit.generator.structure.Structure;
 import org.bukkit.generator.structure.StructureType;
 import org.bukkit.inventory.meta.trim.TrimMaterial;
 import org.bukkit.inventory.meta.trim.TrimPattern;
+import io.papermc.paper.entity.ai.Activity;
+import io.papermc.paper.entity.ai.SensorType;
 import org.bukkit.potion.PotionEffectType;
 
 public interface Generators {
@@ -33,6 +35,8 @@ public interface Generators {
         simpleKey("MobEffectKeys", PotionEffectType.class, Registries.MOB_EFFECT, RegistryKey.MOB_EFFECT, false),
         simpleKey("DamageTypeKeys", DamageType.class, Registries.DAMAGE_TYPE, RegistryKey.DAMAGE_TYPE, true),
         simpleKey("WolfVariantKeys", Wolf.Variant.class, Registries.WOLF_VARIANT, RegistryKey.WOLF_VARIANT, true),
+        simpleKey("ActivityKeys", Activity.class, Registries.ACTIVITY, RegistryKey.ACTIVITY, false),
+        simpleKey("SensorTypeKeys", SensorType.class, Registries.SENSOR_TYPE, (RegistryKey<SensorType>)(Object)RegistryKey.SENSOR_TYPE, false),
         new MobGoalGenerator("VanillaGoal", "com.destroystokyo.paper.entity.ai")
     };
 

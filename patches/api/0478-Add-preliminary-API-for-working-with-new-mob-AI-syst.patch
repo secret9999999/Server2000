@@ -1,0 +1,236 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Janet Blackquill <uhhadd@gmail.com>
+Date: Fri, 26 Apr 2024 23:45:11 -0400
+Subject: [PATCH] Add preliminary API for working with 'new' mob AI system
+
+
+diff --git a/src/main/java/io/papermc/paper/entity/ai/Activity.java b/src/main/java/io/papermc/paper/entity/ai/Activity.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..0dff7ba2e36c1185453832e28466c82ccb2cd621
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/entity/ai/Activity.java
+@@ -0,0 +1,9 @@
++package io.papermc.paper.entity.ai;
++
++import org.bukkit.Keyed;
++
++/**
++ * An Activity is a key to a list of tasks in a Brain.
++ */
++public interface Activity extends Keyed {
++}
+diff --git a/src/main/java/io/papermc/paper/entity/ai/Brain.java b/src/main/java/io/papermc/paper/entity/ai/Brain.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..7bffc44caaa7cabfa380033bfa62059bdf5b82e7
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/entity/ai/Brain.java
+@@ -0,0 +1,53 @@
++package io.papermc.paper.entity.ai;
++
++import java.util.List;
++import org.bukkit.entity.LivingEntity;
++import org.bukkit.entity.Entity;
++import org.bukkit.Location;
++import org.jetbrains.annotations.NotNull;
++
++/**
++ * A brain is the central AI for some modern Minecraft entities such as
++ * villagers and sniffers.
++ */
++public interface Brain<E extends LivingEntity> {
++    /**
++     * If the tasks in the given `activity` can be run, the brain will switch to
++     * the given `activity`.
++     */
++    void useActivityIfPossible(@NotNull Activity activity);
++    /**
++     * Makes the brain switch to the default activity.
++     */
++    void useDefaultActivity();
++    /**
++     * Sets the sensors in use by this brain
++     */
++    void setSensors(@NotNull List<SensorType<E>> sensors);
++    /**
++     * Sets the tasks for the given `activity` to the provided list of `tasks`.
++     */
++    ////// TODO: what is that int parameter doing
++    void setTasksForActivity(@NotNull Activity activity, int begin, @NotNull List<Task<E>> tasks);
++    /**
++     * Clears all tasks for activities associated with this brain.
++     */
++    void clearActivities();
++    /**
++     * Sets the default activity for this brain.
++     */
++    void setDefaultActivity(@NotNull Activity activity);
++    /**
++     * Checks whether the given activity is active.
++     */
++    boolean isActive(@NotNull Activity activity);
++    /**
++     * Sets the entity's current walk target to the given location.
++     */
++    void setWalkTarget(@NotNull Location location, float speed, int completeWithinDistance);
++    /**
++     * Sets the entity's current walk target to the given entity.
++     */
++    void setWalkTarget(@NotNull Entity entity, float speed, int completeWithinDistance);
++}
++
+diff --git a/src/main/java/io/papermc/paper/entity/ai/SensorType.java b/src/main/java/io/papermc/paper/entity/ai/SensorType.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..49fffc2ac7a421350d87bcffb5861b474bc85abb
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/entity/ai/SensorType.java
+@@ -0,0 +1,11 @@
++package io.papermc.paper.entity.ai;
++
++import org.bukkit.Keyed;
++import org.bukkit.entity.LivingEntity;
++import org.jetbrains.annotations.NotNull;
++
++/**
++ * Brains run sensors periodically for expensive-to-compute memories
++ */
++public interface SensorType<E extends LivingEntity> extends Keyed {
++}
+diff --git a/src/main/java/io/papermc/paper/entity/ai/Task.java b/src/main/java/io/papermc/paper/entity/ai/Task.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..8ee58cbb3a520a473e28e48e378c8a9fcb7d24eb
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/entity/ai/Task.java
+@@ -0,0 +1,10 @@
++package io.papermc.paper.entity.ai;
++
++import org.bukkit.entity.LivingEntity;
++
++/**
++ * A task can be associated with an Activity in a Brain in order
++ * to instruct the entity to do something.
++ */
++public interface Task<E extends LivingEntity> {
++}
+\ No newline at end of file
+diff --git a/src/main/java/io/papermc/paper/entity/ai/Tasks.java b/src/main/java/io/papermc/paper/entity/ai/Tasks.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..cd32e1906d15740858a55f987c359caaeb8fd308
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/entity/ai/Tasks.java
+@@ -0,0 +1,45 @@
++package io.papermc.paper.entity.ai;
++
++import org.bukkit.Location;
++import org.bukkit.entity.Mob;
++import org.bukkit.entity.memory.MemoryKey;
++import org.jetbrains.annotations.NotNull;
++import java.util.function.Predicate;
++import java.util.function.Function;
++import org.bukkit.entity.LivingEntity;
++import java.util.Map;
++
++public interface Tasks {
++    /**
++     * Instructs the entity to get within N blocks of the block location.
++     */
++    <Entity extends Mob> @NotNull Task<Entity> walkToWalkTarget(int minRunTime, int maxRunTime);
++    /**
++     * Instructs the entity to swim if it is in water.
++     */
++    <Entity extends Mob> @NotNull Task<Entity> swimIfInWater(float chance);
++    /**
++     * Instructs the entity to panic if it is hit, freezing, or on fire.
++     */
++    <Entity extends Mob> @NotNull Task<Entity> panicOnDamage(float speed);
++    /**
++     * Instructs the entity to change its look target to the closest target
++     * for which the predicate returns true.
++     */
++    <Entity extends LivingEntity> @NotNull Task<Entity> setLookTarget(@NotNull Predicate<LivingEntity> predicate, float maximumDistance);
++    /**
++     * Instructs the entity to set its walk target to the look target if it matches the given predicate.
++     *
++     * @param speed a function defining the speed at which the entity will walk to the given target
++     * @param completionRange the distance in blocks that the entity will attempt to get within
++     */
++    <Entity extends LivingEntity> @NotNull Task<Entity> setWalkTargetToLookTarget(@NotNull Predicate<LivingEntity> predicate, @NotNull Function<LivingEntity, Float> speed, int completionRange);
++    /**
++     * Instructs the entity to look at the look target.
++     */
++    <Entity extends Mob> @NotNull Task<Entity> lookAtLookTarget(int minRunTime, int maxRunTime);
++    /**
++     * Instructs the entity to run one of the given tasks with weighted probability.
++     */
++    <Entity extends LivingEntity> @NotNull Task<Entity> runOneOf(@NotNull Map<Task<? super Entity>, Integer> tasks);
++}
+diff --git a/src/main/java/io/papermc/paper/registry/RegistryKey.java b/src/main/java/io/papermc/paper/registry/RegistryKey.java
+index 7b79bf33074355020e0b3b5ef40c7f2e6ba644b4..53ae572a7acd0775b08dd17f05f4db0b4ac25b50 100644
+--- a/src/main/java/io/papermc/paper/registry/RegistryKey.java
++++ b/src/main/java/io/papermc/paper/registry/RegistryKey.java
+@@ -28,6 +28,8 @@ import org.bukkit.map.MapCursor;
+ import org.bukkit.potion.PotionEffectType;
+ import org.bukkit.potion.PotionType;
+ import org.jetbrains.annotations.ApiStatus;
++import io.papermc.paper.entity.ai.Activity;
++import io.papermc.paper.entity.ai.SensorType;
+ 
+ import static io.papermc.paper.registry.RegistryKeyImpl.create;
+ 
+@@ -54,6 +56,16 @@ public sealed interface RegistryKey<T> extends Keyed permits RegistryKeyImpl {
+      * @see io.papermc.paper.registry.keys.GameEventKeys
+      */
+     RegistryKey<GameEvent> GAME_EVENT = create("game_event");
++    /**
++     * Built-in registry for activities.
++     * @see io.papermc.paper.registry.keys.ActivityKeys
++     */
++    RegistryKey<Activity> ACTIVITY = create("activity");
++    /**
++     * Built-in registry for sensor types.
++     * @see io.papermc.paper.registry.keys.SensorTypeKeys
++     */
++    RegistryKey<SensorType<?>> SENSOR_TYPE = create("sensor_type");
+     /**
+      * Built-in registry for structure types.
+      * @see io.papermc.paper.registry.keys.StructureTypeKeys
+diff --git a/src/main/java/org/bukkit/Registry.java b/src/main/java/org/bukkit/Registry.java
+index 88bb3b9ae99fae97ec21972b75ec43cb6b7b22b5..7a48ce408c5ddac2270e418c987816f859bcc827 100644
+--- a/src/main/java/org/bukkit/Registry.java
++++ b/src/main/java/org/bukkit/Registry.java
+@@ -311,6 +311,20 @@ public interface Registry<T extends Keyed> extends Iterable<T> {
+      */
+     Registry<GameEvent> GAME_EVENT = io.papermc.paper.registry.RegistryAccess.registryAccess().getRegistry(io.papermc.paper.registry.RegistryKey.GAME_EVENT); // Paper
+     // Paper start
++    /**
++     * Activities.
++     *
++     * @see io.papermc.paper.entity.ai.Activity
++     */
++    Registry<io.papermc.paper.entity.ai.Activity> ACTIVITY = Objects.requireNonNull(io.papermc.paper.registry.RegistryAccess.registryAccess().getRegistry(io.papermc.paper.entity.ai.Activity.class), "No registry present for Activity. This is a bug.");
++
++    /**
++     * Sensor types.
++     *
++     * @see io.papermc.paper.entity.ai.SensorType
++     */
++    Registry<io.papermc.paper.entity.ai.SensorType> SENSOR_TYPE = Objects.requireNonNull(io.papermc.paper.registry.RegistryAccess.registryAccess().getRegistry(io.papermc.paper.entity.ai.SensorType.class), "No registry present for SensorType. This is a bug.");
++
+     /**
+      * Configured structures.
+      * @see io.papermc.paper.world.structure.ConfiguredStructure
+diff --git a/src/main/java/org/bukkit/Server.java b/src/main/java/org/bukkit/Server.java
+index c8595ffcfcbdd79794d464415287d46acef72b72..1dca705e757933074786230df73ddf8f32fefb63 100644
+--- a/src/main/java/org/bukkit/Server.java
++++ b/src/main/java/org/bukkit/Server.java
+@@ -2542,4 +2542,11 @@ public interface Server extends PluginMessageRecipient, net.kyori.adventure.audi
+      */
+     boolean isOwnedByCurrentRegion(@NotNull Entity entity);
+     // Paper end - Folia region threading API
++    // Paper start - activities and tasks API
++    @NotNull
++    io.papermc.paper.entity.ai.Tasks getTasks();
++
++    @NotNull
++    <E extends org.bukkit.entity.LivingEntity> io.papermc.paper.entity.ai.Brain<E> getBrain(@NotNull E entity);
++    // Paper end
+ }
