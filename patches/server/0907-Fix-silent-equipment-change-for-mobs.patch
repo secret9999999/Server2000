@@ -5,10 +5,10 @@ Subject: [PATCH] Fix silent equipment change for mobs
 
 
 diff --git a/src/main/java/net/minecraft/world/entity/Mob.java b/src/main/java/net/minecraft/world/entity/Mob.java
-index 66814adfb2cf92067702fc2695b083661cf859c0..bca70fff39409617e9c2b8ea66c1de4b9376d261 100644
+index b04ee23f3d971d5a8cd275c9f91b4c2962889684..ca18f0e0fe93add84101a254cfc75e4fb3552367 100644
 --- a/src/main/java/net/minecraft/world/entity/Mob.java
 +++ b/src/main/java/net/minecraft/world/entity/Mob.java
-@@ -1153,19 +1153,26 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Targeti
+@@ -1160,19 +1160,26 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Targeti
  
      @Override
      public void setItemSlot(EquipmentSlot slot, ItemStack stack) {
