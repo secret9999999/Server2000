@@ -1,0 +1,63 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Tamion <70228790+notTamion@users.noreply.github.com>
+Date: Sat, 25 Nov 2023 23:15:22 +0100
+Subject: [PATCH] Add RequiredPlugins
+
+
+diff --git a/src/main/java/io/papermc/paper/plugin/manager/PaperPluginInstanceManager.java b/src/main/java/io/papermc/paper/plugin/manager/PaperPluginInstanceManager.java
+index 3e82ea07ca4194844c5528446e2c4a46ff4acee5..a3c4b162111f6c1485efab383dec916fa7e02ee8 100644
+--- a/src/main/java/io/papermc/paper/plugin/manager/PaperPluginInstanceManager.java
++++ b/src/main/java/io/papermc/paper/plugin/manager/PaperPluginInstanceManager.java
+@@ -223,6 +223,9 @@ class PaperPluginInstanceManager {
+         if (!(plugin instanceof JavaPlugin javaPlugin)) {
+             throw new IllegalArgumentException("Only expects java plugins.");
+         }
++        if (!this.server.isStopping() && !((org.bukkit.craftbukkit.CraftServer) this.server).isReloadingPlugins && io.papermc.paper.configuration.GlobalConfiguration.get().misc.requiredPlugins.contains(plugin.getName())) {
++            return;
++        }
+         if (!plugin.isEnabled()) {
+             return;
+         }
+diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
+index 05e304f9fc8d0291fa779da589bd060ef4165b49..683802c34b0a0b1f3524958328646e0f07d66c12 100644
+--- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
++++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
+@@ -304,6 +304,7 @@ public final class CraftServer implements Server {
+     private boolean overrideAllCommandBlockCommands = false;
+     public boolean ignoreVanillaPermissions = false;
+     private final List<CraftPlayer> playerView;
++    public boolean isReloadingPlugins; // Paper - Add RequiredPlugins
+     public int reloadCount;
+     private final io.papermc.paper.datapack.PaperDatapackManager datapackManager; // Paper
+     public static Exception excessiveVelEx; // Paper - Velocity warnings
+@@ -553,6 +554,14 @@ public final class CraftServer implements Server {
+         }
+ 
+         if (type == PluginLoadOrder.POSTWORLD) {
++            // Paper start - Add RequiredPlugins
++            List<String> missingPlugins = new ArrayList<>(io.papermc.paper.configuration.GlobalConfiguration.get().misc.requiredPlugins);
++            missingPlugins.removeAll(java.util.Arrays.stream(this.paperPluginManager.getPlugins()).filter(Plugin::isEnabled).map(Plugin::getName).toList());
++            if (!missingPlugins.isEmpty()) {
++                this.getLogger().severe("The following required plugins aren't enabled: " + String.join(", ", missingPlugins) + ". Stopping Server.");
++                this.getServer().stopServer();
++            }
++            // Paper end - Add RequiredPlugins
+             // Spigot start - Allow vanilla commands to be forced to be the main command
+             this.setVanillaCommands(true);
+             this.commandMap.setFallbackCommands();
+@@ -1071,6 +1080,7 @@ public final class CraftServer implements Server {
+             world.spigotConfig.init(); // Spigot
+         }
+ 
++        this.isReloadingPlugins = true; // Paper - Add RequiredPlugins
+         Plugin[] pluginClone = pluginManager.getPlugins().clone(); // Paper
+         this.pluginManager.clearPlugins();
+         this.commandMap.clearCommands();
+@@ -1112,6 +1122,7 @@ public final class CraftServer implements Server {
+         this.loadPlugins();
+         this.enablePlugins(PluginLoadOrder.STARTUP);
+         this.enablePlugins(PluginLoadOrder.POSTWORLD);
++        this.isReloadingPlugins = false; // Paper - Add RequiredPlugins
+         this.getPluginManager().callEvent(new ServerLoadEvent(ServerLoadEvent.LoadType.RELOAD));
+         if (io.papermc.paper.plugin.PluginInitializerManager.instance().pluginRemapper != null) io.papermc.paper.plugin.PluginInitializerManager.instance().pluginRemapper.pluginsEnabled(); // Paper - Remap plugins
+         org.spigotmc.WatchdogThread.hasStarted = true; // Paper - Disable watchdog early timeout on reload
