@@ -5,18 +5,18 @@ Subject: [PATCH] Test changes
 
 
 diff --git a/build.gradle.kts b/build.gradle.kts
-index 50d9182a4845564cd62b026700a7d0517c25e74d..69155f6badcd79b3479654363ca1f1d8a138a7ad 100644
+index 9ca8ddea1d53076e0f23c6e3bf3e3eca5cceb393..2f73e709dcde063ec7ca2181f2f2d5670fd479f5 100644
 --- a/build.gradle.kts
 +++ b/build.gradle.kts
-@@ -23,6 +23,7 @@ dependencies {
+@@ -22,6 +22,7 @@ dependencies {
      testImplementation("org.hamcrest:hamcrest:2.2")
      testImplementation("org.mockito:mockito-core:5.11.0")
      testImplementation("org.ow2.asm:asm-tree:9.7")
 +    testImplementation("org.junit-pioneer:junit-pioneer:2.2.0") // Paper - CartesianTest
  }
  
- val craftbukkitPackageVersion = "1_20_R3" // Paper
-@@ -53,6 +54,12 @@ tasks.jar {
+ paperweight {
+@@ -55,6 +56,12 @@ tasks.jar {
      }
  }
  
@@ -28,7 +28,7 @@ index 50d9182a4845564cd62b026700a7d0517c25e74d..69155f6badcd79b3479654363ca1f1d8
 +
  publishing {
      publications.create<MavenPublication>("maven") {
-         artifact(tasks.shadowJar)
+     }
 diff --git a/src/test/java/io/papermc/paper/registry/RegistryKeyTest.java b/src/test/java/io/papermc/paper/registry/RegistryKeyTest.java
 new file mode 100644
 index 0000000000000000000000000000000000000000..e070aa1bb69859224493d958621389ee757f8752
@@ -337,11 +337,24 @@ index 0000000000000000000000000000000000000000..6cbf11c898439834cffb99ef84e5df14
 +public @interface MethodParameterSource {
 +    String[] value() default {};
 +}
+diff --git a/src/test/java/org/bukkit/registry/RegistryConstantsTest.java b/src/test/java/org/bukkit/registry/RegistryConstantsTest.java
+index 1b1e55f70b3c9f922bd1cc63209816f50d7d29d1..c75cfdfc3dc07b922d8943b67a59cfffbbb9a214 100644
+--- a/src/test/java/org/bukkit/registry/RegistryConstantsTest.java
++++ b/src/test/java/org/bukkit/registry/RegistryConstantsTest.java
+@@ -23,7 +23,7 @@ public class RegistryConstantsTest extends AbstractTestingBase {
+     @Test
+     public void testDamageType() {
+         this.testExcessConstants(DamageType.class, Registry.DAMAGE_TYPE);
+-        // this.testMissingConstants(DamageType.class, Registries.DAMAGE_TYPE); // WIND_CHARGE not registered
++        this.testMissingConstants(DamageType.class, Registries.DAMAGE_TYPE); // Paper - re-enable this one
+     }
+ 
+     @Test
 diff --git a/src/test/java/org/bukkit/support/DummyServer.java b/src/test/java/org/bukkit/support/DummyServer.java
-index b19d4f7d1fcb604b448a5084f6bfe56d47ab12b3..f3017525b0c2397fdc7ce0778add2e7b38e9e2ba 100644
+index ee0cff84379bc0539b2c611a4904aff9f5843814..02a8e6b45bf304b6e0f88043a25188aa16b3d6bf 100644
 --- a/src/test/java/org/bukkit/support/DummyServer.java
 +++ b/src/test/java/org/bukkit/support/DummyServer.java
-@@ -48,6 +48,15 @@ public final class DummyServer {
+@@ -50,6 +50,15 @@ public final class DummyServer {
                  return registers.computeIfAbsent(aClass, key -> CraftRegistry.createRegistry(aClass, AbstractTestingBase.REGISTRY_CUSTOM));
              });
  

@@ -38,10 +38,10 @@ index 0000000000000000000000000000000000000000..b60f59cf5cc8eb84a6055b7861857dec
 +    }
 +}
 diff --git a/src/main/java/net/minecraft/Util.java b/src/main/java/net/minecraft/Util.java
-index 1f1422a000eb9a0fb819f26d42b3f39ed683a8da..1bab7a03d433d3745cf9e244f5501dd3efedf583 100644
+index cf54e2c8e8aadb9e7343382a5ba59c657234c9b9..c7a21a11efba5c212958d56095217621828c1062 100644
 --- a/src/main/java/net/minecraft/Util.java
 +++ b/src/main/java/net/minecraft/Util.java
-@@ -88,7 +88,7 @@ public class Util {
+@@ -90,7 +90,7 @@ public class Util {
      private static final int DEFAULT_MAX_THREADS = 255;
      private static final int DEFAULT_SAFE_FILE_OPERATION_RETRIES = 10;
      private static final String MAX_THREADS_SYSTEM_PROPERTY = "max.bg.threads";
@@ -50,7 +50,7 @@ index 1f1422a000eb9a0fb819f26d42b3f39ed683a8da..1bab7a03d433d3745cf9e244f5501dd3
      private static final ExecutorService IO_POOL = makeIoExecutor("IO-Worker-", false);
      private static final ExecutorService DOWNLOAD_POOL = makeIoExecutor("Download-", true);
      // Paper start - don't submit BLOCKING PROFILE LOOKUPS to the world gen thread
-@@ -154,15 +154,27 @@ public class Util {
+@@ -160,15 +160,27 @@ public class Util {
          return FILENAME_DATE_TIME_FORMATTER.format(ZonedDateTime.now());
      }
  
@@ -83,7 +83,7 @@ index 1f1422a000eb9a0fb819f26d42b3f39ed683a8da..1bab7a03d433d3745cf9e244f5501dd3
                      @Override
                      protected void onTermination(Throwable throwable) {
                          if (throwable != null) {
-@@ -178,6 +190,7 @@ public class Util {
+@@ -184,6 +196,7 @@ public class Util {
                  return forkJoinWorkerThread;
              }, Util::onThreadException, true);
          }
@@ -92,10 +92,10 @@ index 1f1422a000eb9a0fb819f26d42b3f39ed683a8da..1bab7a03d433d3745cf9e244f5501dd3
          return executorService;
      }
 diff --git a/src/main/java/net/minecraft/server/MinecraftServer.java b/src/main/java/net/minecraft/server/MinecraftServer.java
-index 3e6008d27ed81453f6b4448f0334b8d343f66694..3ccd1178f0db9301fe87afb8a0d996c0acfc1b16 100644
+index 077b2e1d06a4bb0c2ce10274dc6144ee76608d90..9477d6f850b112ff8e835ba5e80d56bc090f9c48 100644
 --- a/src/main/java/net/minecraft/server/MinecraftServer.java
 +++ b/src/main/java/net/minecraft/server/MinecraftServer.java
-@@ -312,6 +312,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -319,6 +319,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          thread.setUncaughtExceptionHandler((thread1, throwable) -> {
              MinecraftServer.LOGGER.error("Uncaught exception in server thread", throwable);
          });

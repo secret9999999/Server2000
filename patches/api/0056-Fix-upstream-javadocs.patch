@@ -49,10 +49,10 @@ index a04cde615f8c4bc593f8d9f8f6f1438008aaa707..548f6d28c28d74bed8b58ee828759093
       * @param target the target to remove from this list
       */
 diff --git a/src/main/java/org/bukkit/Bukkit.java b/src/main/java/org/bukkit/Bukkit.java
-index 5f758640ae71bca8c5e532af21362011a0aafb89..2bdba56855d3427a1c48bfada0e6416085386cdb 100644
+index 6b3a332f556e7c49796a62f20fd33241bbcde09e..3b7087d5c71a498f513f67514db9e118780363c7 100644
 --- a/src/main/java/org/bukkit/Bukkit.java
 +++ b/src/main/java/org/bukkit/Bukkit.java
-@@ -1494,6 +1494,8 @@ public final class Bukkit {
+@@ -1506,6 +1506,8 @@ public final class Bukkit {
  
      /**
       * Gets every player that has ever played on this server.
@@ -74,6 +74,19 @@ index 0cf808356a1a5c6fc4bcf97a694ed9beb80a776a..dc765dea47a9a1c1520fb16ddb24f814
       * @param z Z-coordinate (0-15)
       * @return temperature at given coordinate
       */
+diff --git a/src/main/java/org/bukkit/Particle.java b/src/main/java/org/bukkit/Particle.java
+index 3d636cb7f275df053d202356c5e9fad5b1112867..4a06ed9c769acb2eb4c6f4b76c84dc2e63176010 100644
+--- a/src/main/java/org/bukkit/Particle.java
++++ b/src/main/java/org/bukkit/Particle.java
+@@ -209,7 +209,7 @@ public enum Particle implements Keyed {
+     }
+ 
+     /**
+-     * Options which can be applied to redstone dust particles - a particle
++     * Options which can be applied to dust particles - a particle
+      * color and size.
+      */
+     public static class DustOptions {
 diff --git a/src/main/java/org/bukkit/RegionAccessor.java b/src/main/java/org/bukkit/RegionAccessor.java
 index 4c9fd558fbf7f57a948fbb7f80f4651048c0fb57..458119a9ef7ce8e1f59bd47caa5b4bc698715440 100644
 --- a/src/main/java/org/bukkit/RegionAccessor.java
@@ -114,10 +127,10 @@ index 4c9fd558fbf7f57a948fbb7f80f4651048c0fb57..458119a9ef7ce8e1f59bd47caa5b4bc6
       * @param statePredicate The predicate which should get used to test if a block should be set or not.
       * @return true if the tree was created successfully, otherwise false
 diff --git a/src/main/java/org/bukkit/Server.java b/src/main/java/org/bukkit/Server.java
-index e3136651ce083e67a1a7cb976d27df5666843401..50e8c25cc378b02b09ef57643cc753fa58ec1166 100644
+index 9088bd9dfb515381d5df1c255ae3319f9cdde81e..012b5954a2f9dc61fb8ad29c4b8bce2648ddc681 100644
 --- a/src/main/java/org/bukkit/Server.java
 +++ b/src/main/java/org/bukkit/Server.java
-@@ -568,13 +568,10 @@ public interface Server extends PluginMessageRecipient, net.kyori.adventure.audi
+@@ -570,13 +570,10 @@ public interface Server extends PluginMessageRecipient, net.kyori.adventure.audi
       * </ul>
       * <p>
       * <b>Note:</b> If set to 0, {@link SpawnCategory} mobs spawning will be disabled.
@@ -132,7 +145,7 @@ index e3136651ce083e67a1a7cb976d27df5666843401..50e8c25cc378b02b09ef57643cc753fa
       */
      public int getTicksPerSpawns(@NotNull SpawnCategory spawnCategory);
  
-@@ -1274,6 +1271,8 @@ public interface Server extends PluginMessageRecipient, net.kyori.adventure.audi
+@@ -1284,6 +1281,8 @@ public interface Server extends PluginMessageRecipient, net.kyori.adventure.audi
  
      /**
       * Gets every player that has ever played on this server.
@@ -142,10 +155,10 @@ index e3136651ce083e67a1a7cb976d27df5666843401..50e8c25cc378b02b09ef57643cc753fa
       * @return an array containing all previous players
       */
 diff --git a/src/main/java/org/bukkit/World.java b/src/main/java/org/bukkit/World.java
-index 2b38b328187b853f5b36d796d3b6b359497647d8..a55e92dc09202437abac9cb5b7aacf3c275f5b9c 100644
+index 4dc687f16a8181876fb7b3e56b39a55ea5507408..98e3c12801cc36c868f08b15d1188295ea4364e0 100644
 --- a/src/main/java/org/bukkit/World.java
 +++ b/src/main/java/org/bukkit/World.java
-@@ -2723,7 +2723,7 @@ public interface World extends RegionAccessor, WorldInfo, PluginMessageRecipient
+@@ -2739,7 +2739,7 @@ public interface World extends RegionAccessor, WorldInfo, PluginMessageRecipient
      /**
       * Find the closest nearby structure of a given {@link StructureType}.
       * Finding unexplored structures can, and will, block if the world is
@@ -154,7 +167,7 @@ index 2b38b328187b853f5b36d796d3b6b359497647d8..a55e92dc09202437abac9cb5b7aacf3c
       * temporarily freezing while locating an unexplored structure.
       * <p>
       * The {@code radius} is not a rigid square radius. Each structure may alter
-@@ -2757,7 +2757,7 @@ public interface World extends RegionAccessor, WorldInfo, PluginMessageRecipient
+@@ -2773,7 +2773,7 @@ public interface World extends RegionAccessor, WorldInfo, PluginMessageRecipient
      /**
       * Find the closest nearby structure of a given {@link StructureType}.
       * Finding unexplored structures can, and will, block if the world is
@@ -163,7 +176,7 @@ index 2b38b328187b853f5b36d796d3b6b359497647d8..a55e92dc09202437abac9cb5b7aacf3c
       * temporarily freezing while locating an unexplored structure.
       * <p>
       * The {@code radius} is not a rigid square radius. Each structure may alter
-@@ -2790,7 +2790,7 @@ public interface World extends RegionAccessor, WorldInfo, PluginMessageRecipient
+@@ -2806,7 +2806,7 @@ public interface World extends RegionAccessor, WorldInfo, PluginMessageRecipient
      /**
       * Find the closest nearby structure of a given {@link Structure}. Finding
       * unexplored structures can, and will, block if the world is looking in
@@ -343,10 +356,10 @@ index 91fc11dda99de506be83d40df8929bf7cd8e8d85..7dc631ebd009f5f5c3ac1699c3f3515c
      // Paper end
  }
 diff --git a/src/main/java/org/bukkit/entity/Arrow.java b/src/main/java/org/bukkit/entity/Arrow.java
-index 8eb0cf31b1ce6d714a14cf65bbb117ff163ae2f3..8e57082e8b19a2fd9625816c2ea4a90d41f78ca5 100644
+index bd1116adc891b2a4243da205127f5ece76089925..4d4c9efb81ac14950b24a07edcfe1c46ab3caf91 100644
 --- a/src/main/java/org/bukkit/entity/Arrow.java
 +++ b/src/main/java/org/bukkit/entity/Arrow.java
-@@ -93,7 +93,7 @@ public interface Arrow extends AbstractArrow {
+@@ -73,7 +73,7 @@ public interface Arrow extends AbstractArrow {
       * Removes a custom potion effect from this arrow.
       *
       * @param type the potion effect type to remove
@@ -426,10 +439,10 @@ index ae9eaaa8e38e1d9dfc459926c7fc51ddb89de84a..b2ec535bb1b0ce0c114ddd7638b90218
      @Override
      public int getConversionTime();
 diff --git a/src/main/java/org/bukkit/entity/Player.java b/src/main/java/org/bukkit/entity/Player.java
-index 83f9026e86223bc763990a90da5fda26dec2785f..d507aeb5b906b5b68d1daa5bfd2d98ede1b0e7b6 100644
+index 252390260f62ee945c21267cd8717b7725158a21..cd00d2a064ee4c86b394a7861182fba9cf79cfb3 100644
 --- a/src/main/java/org/bukkit/entity/Player.java
 +++ b/src/main/java/org/bukkit/entity/Player.java
-@@ -434,15 +434,15 @@ public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginM
+@@ -478,15 +478,15 @@ public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginM
  
      /**
       * Saves the players current location, health, inventory, motion, and
@@ -449,7 +462,7 @@ index 83f9026e86223bc763990a90da5fda26dec2785f..d507aeb5b906b5b68d1daa5bfd2d98ed
       * <p>
       * Note: This will overwrite the players current inventory, health,
       * motion, etc, with the state from the saved dat file.
-@@ -779,7 +779,7 @@ public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginM
+@@ -823,7 +823,7 @@ public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginM
      /**
       * Plays an effect to just this player.
       *
@@ -458,7 +471,7 @@ index 83f9026e86223bc763990a90da5fda26dec2785f..d507aeb5b906b5b68d1daa5bfd2d98ed
       * @param loc the location to play the effect at
       * @param effect the {@link Effect}
       * @param data a data bit needed for some effects
-@@ -1190,7 +1190,7 @@ public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginM
+@@ -1234,7 +1234,7 @@ public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginM
       *
       * Use supplied alternative character to the section symbol to represent legacy color codes.
       *
@@ -467,7 +480,7 @@ index 83f9026e86223bc763990a90da5fda26dec2785f..d507aeb5b906b5b68d1daa5bfd2d98ed
       * @param message The message to send
       * @deprecated use {@link #sendActionBar(net.kyori.adventure.text.Component)}
       */
-@@ -1656,7 +1656,7 @@ public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginM
+@@ -1700,7 +1700,7 @@ public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginM
  
      /**
       * Allows this player to see a player that was previously hidden. If
@@ -476,7 +489,7 @@ index 83f9026e86223bc763990a90da5fda26dec2785f..d507aeb5b906b5b68d1daa5bfd2d98ed
       * remain hidden until the other plugin calls this method too.
       *
       * @param plugin Plugin that wants to show the player
-@@ -1683,7 +1683,7 @@ public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginM
+@@ -1727,7 +1727,7 @@ public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginM
  
      /**
       * Allows this player to see an entity that was previously hidden. If
@@ -485,7 +498,7 @@ index 83f9026e86223bc763990a90da5fda26dec2785f..d507aeb5b906b5b68d1daa5bfd2d98ed
       * remain hidden until the other plugin calls this method too.
       *
       * @param plugin Plugin that wants to show the entity
-@@ -1766,9 +1766,6 @@ public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginM
+@@ -1810,9 +1810,6 @@ public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginM
       *     case this method will have no affect on them. Use the
       *     {@link PlayerResourcePackStatusEvent} to figure out whether or not
       *     the player loaded the pack!
@@ -495,7 +508,7 @@ index 83f9026e86223bc763990a90da5fda26dec2785f..d507aeb5b906b5b68d1daa5bfd2d98ed
       * <li>The request is send with "null" as the hash. This might result
       *     in newer versions not loading the pack correctly.
       * </ul>
-@@ -1802,9 +1799,6 @@ public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginM
+@@ -1846,9 +1843,6 @@ public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginM
       *     case this method will have no affect on them. Use the
       *     {@link PlayerResourcePackStatusEvent} to figure out whether or not
       *     the player loaded the pack!
@@ -505,7 +518,7 @@ index 83f9026e86223bc763990a90da5fda26dec2785f..d507aeb5b906b5b68d1daa5bfd2d98ed
       * <li>The request is send with empty string as the hash. This might result
       *     in newer versions not loading the pack correctly.
       * </ul>
-@@ -1841,9 +1835,6 @@ public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginM
+@@ -1885,9 +1879,6 @@ public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginM
       *     case this method will have no affect on them. Use the
       *     {@link PlayerResourcePackStatusEvent} to figure out whether or not
       *     the player loaded the pack!
@@ -600,16 +613,15 @@ index a0f6f1af304190b4c5db4b284d460f625eeb7801..7e21548cac8515c281ec86853e9272ab
   * The Block is already broken as this event is called, so #getBlock() will be
   * AIR in most cases. Use #getBlockState() for more Information about the broken
 diff --git a/src/main/java/org/bukkit/event/block/BlockExplodeEvent.java b/src/main/java/org/bukkit/event/block/BlockExplodeEvent.java
-index 44f7f6939a27b9a0a796d91eac4b7c97ec90a643..641c71ab66bd2499b35cf3c1d533fd105d096e10 100644
+index e534954457a9961a26dbec7ac035bec07e1d6694..8309b030c2120f1496d244f3ebc1094def41c869 100644
 --- a/src/main/java/org/bukkit/event/block/BlockExplodeEvent.java
 +++ b/src/main/java/org/bukkit/event/block/BlockExplodeEvent.java
-@@ -7,7 +7,9 @@ import org.bukkit.event.HandlerList;
- import org.jetbrains.annotations.NotNull;
- 
- /**
-- * Called when a block explodes
-+ * Called when a block explodes interacting with blocks. The
-+ * event isn't called if the {@link org.bukkit.GameRule#MOB_GRIEFING}
+@@ -13,6 +13,9 @@ import org.jetbrains.annotations.NotNull;
+  * Note that due to the nature of explosions, {@link #getBlock()} will always be
+  * an air block. {@link #getExplodedBlockState()} should be used to get
+  * information about the block state that exploded.
++ * <p>
++ * The event isn't called if the {@link org.bukkit.GameRule#MOB_GRIEFING}
 + * is disabled as no block interaction will occur.
   */
  public class BlockExplodeEvent extends BlockEvent implements Cancellable {
@@ -641,10 +653,10 @@ index be0a2d1f234d8265d98e54e518a994957b1f3ab7..4e3c406ba883aae553e8d69b6b719b87
       * than BLOCK_CANBUILD, as this refers to a player, not universe-physics
       * rule like cactus on dirt.
 diff --git a/src/main/java/org/bukkit/event/enchantment/PrepareItemEnchantEvent.java b/src/main/java/org/bukkit/event/enchantment/PrepareItemEnchantEvent.java
-index 2ff1b1308571d8f8056d3359e8a8ba4a589c3726..e9a6e5be5f33a342f7e5c496f0f1c64b2f302ace 100644
+index fc2120e03737f5882d6ae916db93fdcf4939b2ba..f2edd4a9357832e9dec3fb0aafa006335d7b289b 100644
 --- a/src/main/java/org/bukkit/event/enchantment/PrepareItemEnchantEvent.java
 +++ b/src/main/java/org/bukkit/event/enchantment/PrepareItemEnchantEvent.java
-@@ -80,7 +80,7 @@ public class PrepareItemEnchantEvent extends InventoryEvent implements Cancellab
+@@ -81,7 +81,7 @@ public class PrepareItemEnchantEvent extends InventoryEvent implements Cancellab
      /**
       * Get a list of available {@link EnchantmentOffer} for the player. You can
       * modify the values to change the available offers for the player. An offer
@@ -1315,7 +1327,7 @@ index 9adc827bc52eaa767a39c82e9cb0ff5a48e02b14..2dde946443fee1f6e79b882cbcb44854
       *
       * @param chance of the boots being dropped
 diff --git a/src/main/java/org/bukkit/inventory/ItemFlag.java b/src/main/java/org/bukkit/inventory/ItemFlag.java
-index 42fcc31147934fd4ed6484b0729e938e7ae2f8e2..4e637420b9a39b822be19367a16da93f236549b3 100644
+index 8453bd058d426c1088b04c55d2448d205f0a104b..1b3580d1861af402396121805715e4087b3bc587 100644
 --- a/src/main/java/org/bukkit/inventory/ItemFlag.java
 +++ b/src/main/java/org/bukkit/inventory/ItemFlag.java
 @@ -35,7 +35,7 @@ public enum ItemFlag {
@@ -1437,11 +1449,27 @@ index 07c3dff4d6190ef388d9c1e1c36f67f00a3e8e66..597a18a767b68b47e81454b7d44613c7
       *
       * @param input The input choice.
       * @return The changed recipe, so you can chain calls.
+diff --git a/src/main/java/org/bukkit/inventory/meta/BlockStateMeta.java b/src/main/java/org/bukkit/inventory/meta/BlockStateMeta.java
+index e7d905b1146b2bdd2da5bdeb6bf3541fb181d59e..c7d3041221742f6655155f19ef2addcaf2401015 100644
+--- a/src/main/java/org/bukkit/inventory/meta/BlockStateMeta.java
++++ b/src/main/java/org/bukkit/inventory/meta/BlockStateMeta.java
+@@ -32,6 +32,11 @@ public interface BlockStateMeta extends ItemMeta {
+      * @param blockState the block state to attach to the block.
+      * @throws IllegalArgumentException if the blockState is null
+      *         or invalid for this item.
++     *
++     * @apiNote As of 1.20.5 the block state carries a copy of the item's data deviations.
++     * As such, setting the block state via this method will reset secondary deviations of the item meta.
++     * This can manifest in the addition to an existing lore failing or a change of a previously added display name.
++     * It is hence recommended to first mutate the block state, set it back, and then mutate the item meta.
+      */
+     void setBlockState(@NotNull BlockState blockState);
+ }
 diff --git a/src/main/java/org/bukkit/inventory/meta/ItemMeta.java b/src/main/java/org/bukkit/inventory/meta/ItemMeta.java
-index f1fcc844d563a0108230676dec84ef25485756b3..80836c5f87c15d688f27af5247b4e114cea7028d 100644
+index 18c2864c99d4dfae16cdb35143486aeebb9a6fd6..d66857825528ee772219440dffa28ad8e820493b 100644
 --- a/src/main/java/org/bukkit/inventory/meta/ItemMeta.java
 +++ b/src/main/java/org/bukkit/inventory/meta/ItemMeta.java
-@@ -311,7 +311,7 @@ public interface ItemMeta extends Cloneable, ConfigurationSerializable, Persiste
+@@ -513,7 +513,7 @@ public interface ItemMeta extends Cloneable, ConfigurationSerializable, Persiste
      /**
       * Return an immutable copy of all {@link Attribute}s and their
       * {@link AttributeModifier}s for a given {@link EquipmentSlot}.<br>
@@ -1450,6 +1478,21 @@ index f1fcc844d563a0108230676dec84ef25485756b3..80836c5f87c15d688f27af5247b4e114
       * {@link EquipmentSlot} will be returned. This is because
       * AttributeModifiers without a slot are active in any slot.<br>
       * If there are no attributes set for the given slot, an empty map
+diff --git a/src/main/java/org/bukkit/inventory/meta/LeatherArmorMeta.java b/src/main/java/org/bukkit/inventory/meta/LeatherArmorMeta.java
+index c1676991c3cc5f8d6e3f97d8cb356d6e2aa52809..7f9eabcaa4d803ee524a9cc8717379fe6a93a5af 100644
+--- a/src/main/java/org/bukkit/inventory/meta/LeatherArmorMeta.java
++++ b/src/main/java/org/bukkit/inventory/meta/LeatherArmorMeta.java
+@@ -8,8 +8,8 @@ import org.jetbrains.annotations.Nullable;
+ 
+ /**
+  * Represents leather armor ({@link Material#LEATHER_BOOTS}, {@link
+- * Material#LEATHER_CHESTPLATE}, {@link Material#LEATHER_HELMET}, or {@link
+- * Material#LEATHER_LEGGINGS}) that can be colored.
++ * Material#LEATHER_LEGGINGS}, {@link Material#LEATHER_CHESTPLATE}, {@link
++ * Material#LEATHER_HELMET}, or {@link Material#LEATHER_HORSE_ARMOR}) that can be colored.
+  */
+ public interface LeatherArmorMeta extends ItemMeta {
+ 
 diff --git a/src/main/java/org/bukkit/scoreboard/Objective.java b/src/main/java/org/bukkit/scoreboard/Objective.java
 index 22b1dc5fd4d453161a5ee520072f8e8f955b3a80..a625bcab8e77b05b3341a52c708fae1542b7e3d5 100644
 --- a/src/main/java/org/bukkit/scoreboard/Objective.java

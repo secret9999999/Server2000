@@ -4,11 +4,23 @@ Date: Wed, 30 Mar 2016 19:36:20 -0400
 Subject: [PATCH] MC Dev fixes
 
 
+diff --git a/src/main/java/net/minecraft/commands/arguments/item/ItemInput.java b/src/main/java/net/minecraft/commands/arguments/item/ItemInput.java
+index a9617232c488a7a641b6657b265a5e42e77bc117..3d24fbca90bc7d8bdbac1be2176555c15ae75039 100644
+--- a/src/main/java/net/minecraft/commands/arguments/item/ItemInput.java
++++ b/src/main/java/net/minecraft/commands/arguments/item/ItemInput.java
+@@ -68,6 +68,6 @@ public class ItemInput {
+     }
+ 
+     private String getItemName() {
+-        return this.item.unwrapKey().map(ResourceKey::location).orElseGet(() -> "unknown[" + this.item + "]").toString();
++        return this.item.unwrapKey().<Object>map(ResourceKey::location).orElseGet(() -> "unknown[" + this.item + "]").toString(); // Paper - decompile fix
+     }
+ }
 diff --git a/src/main/java/net/minecraft/core/BlockPos.java b/src/main/java/net/minecraft/core/BlockPos.java
-index 1a4cab0b9995b733aa84b89129009a99177eee9b..ead823fa2a143acb05b33152ee1e5ee4b4936a20 100644
+index 478d2114fbd5c499a8adbf8b6cefcc8335e830dc..2074d4327f0c356c220f3a6a9761439e76a15fc3 100644
 --- a/src/main/java/net/minecraft/core/BlockPos.java
 +++ b/src/main/java/net/minecraft/core/BlockPos.java
-@@ -405,12 +405,12 @@ public class BlockPos extends Vec3i {
+@@ -427,12 +427,12 @@ public class BlockPos extends Vec3i {
                      if (this.index == l) {
                          return this.endOfData();
                      } else {
@@ -27,23 +39,23 @@ index 1a4cab0b9995b733aa84b89129009a99177eee9b..ead823fa2a143acb05b33152ee1e5ee4
                  }
              };
 diff --git a/src/main/java/net/minecraft/core/registries/BuiltInRegistries.java b/src/main/java/net/minecraft/core/registries/BuiltInRegistries.java
-index d14613f7d37198276c251e73703b060a971fac28..e8afaa3c1fab0435acb068426091bdf776263112 100644
+index 433b6673ea62d466c466c1ff3732041a8fcbb6b5..bc91370654f5da33cbfe7d42431568915c1159d6 100644
 --- a/src/main/java/net/minecraft/core/registries/BuiltInRegistries.java
 +++ b/src/main/java/net/minecraft/core/registries/BuiltInRegistries.java
-@@ -307,7 +307,7 @@ public class BuiltInRegistries {
+@@ -299,7 +299,7 @@ public class BuiltInRegistries {
          Bootstrap.checkBootstrapCalled(() -> "registry " + key);
          ResourceLocation resourceLocation = key.location();
          LOADERS.put(resourceLocation, () -> initializer.run(registry));
--        WRITABLE_REGISTRY.register((ResourceKey<WritableRegistry<?>>)key, registry, lifecycle);
-+        WRITABLE_REGISTRY.register((ResourceKey)key, registry, lifecycle); // Paper - decompile fix
+-        WRITABLE_REGISTRY.register((ResourceKey<WritableRegistry<?>>)key, registry, RegistrationInfo.BUILT_IN);
++        WRITABLE_REGISTRY.register((ResourceKey)key, registry, RegistrationInfo.BUILT_IN); // Paper - decompile fix
          return registry;
      }
  
 diff --git a/src/main/java/net/minecraft/nbt/TagParser.java b/src/main/java/net/minecraft/nbt/TagParser.java
-index 733303e860560f4c93372326ab4efdaf21e5ace7..ebe0efe488357ae895aaf752e9bc008b96db156f 100644
+index a614e960fcd5958ad17b679eee8a8e6926f58e62..da101bca71f4710812621b98f0a0d8cab180346a 100644
 --- a/src/main/java/net/minecraft/nbt/TagParser.java
 +++ b/src/main/java/net/minecraft/nbt/TagParser.java
-@@ -252,11 +252,11 @@ public class TagParser {
+@@ -253,11 +253,11 @@ public class TagParser {
              }
  
              if (typeReader == ByteTag.TYPE) {
@@ -58,33 +70,11 @@ index 733303e860560f4c93372326ab4efdaf21e5ace7..ebe0efe488357ae895aaf752e9bc008b
              }
  
              if (!this.hasElementSeparator()) {
-diff --git a/src/main/java/net/minecraft/network/ConnectionProtocol.java b/src/main/java/net/minecraft/network/ConnectionProtocol.java
-index 68ccf051f5a769abaa0bf9508add9303c56a1193..9d6dafb4855af9ccb7bc033ebf0fca5f75ceb9c6 100644
---- a/src/main/java/net/minecraft/network/ConnectionProtocol.java
-+++ b/src/main/java/net/minecraft/network/ConnectionProtocol.java
-@@ -451,7 +451,7 @@ public enum ConnectionProtocol {
-         protocol()
-             .addFlow(
-                 PacketFlow.CLIENTBOUND,
--                new ConnectionProtocol.PacketSet<ClientCommonPacketListener>()
-+                new ConnectionProtocol.PacketSet<net.minecraft.network.protocol.configuration.ClientConfigurationPacketListener>() // Paper - decompile fix
-                     .addPacket(ClientboundCustomPayloadPacket.class, ClientboundCustomPayloadPacket::new)
-                     .addPacket(ClientboundDisconnectPacket.class, ClientboundDisconnectPacket::new)
-                     .addPacket(ClientboundFinishConfigurationPacket.class, ClientboundFinishConfigurationPacket::new)
-@@ -465,7 +465,7 @@ public enum ConnectionProtocol {
-             )
-             .addFlow(
-                 PacketFlow.SERVERBOUND,
--                new ConnectionProtocol.PacketSet<ServerCommonPacketListener>()
-+                new ConnectionProtocol.PacketSet<net.minecraft.network.protocol.configuration.ServerConfigurationPacketListener>() // Paper - decompile fix
-                     .addPacket(ServerboundClientInformationPacket.class, ServerboundClientInformationPacket::new)
-                     .addPacket(ServerboundCustomPayloadPacket.class, ServerboundCustomPayloadPacket::new)
-                     .addPacket(ServerboundFinishConfigurationPacket.class, ServerboundFinishConfigurationPacket::new)
 diff --git a/src/main/java/net/minecraft/server/MinecraftServer.java b/src/main/java/net/minecraft/server/MinecraftServer.java
-index 62e096c9cc05c387ca2413a490f44c6c66a5c41e..9c23ad38f935b2f31c0e0998e685978434202900 100644
+index 1d241972e6f93a88c31f1276e15bae0912db5c9e..9efd8dc1c35dc0a13f5ff3f097386e6e768b3bc0 100644
 --- a/src/main/java/net/minecraft/server/MinecraftServer.java
 +++ b/src/main/java/net/minecraft/server/MinecraftServer.java
-@@ -1863,7 +1863,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1924,7 +1924,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
              PackRepository resourcepackrepository = this.packRepository;
  
              Objects.requireNonNull(this.packRepository);
@@ -106,16 +96,16 @@ index 661a6274a800ca9b91bdb809d026972d23c3b263..ea72dcb064a35bc6245bc5c94d592efe
      }
  
      public static <T> SortedArraySet<T> create(Comparator<T> comparator) {
-diff --git a/src/main/java/net/minecraft/world/item/crafting/RecipeManager.java b/src/main/java/net/minecraft/world/item/crafting/RecipeManager.java
-index 04adc10f24f96804a5cb14e884224bb672360464..4259181bab2dc4f2d0409b56fdf81d966003376d 100644
---- a/src/main/java/net/minecraft/world/item/crafting/RecipeManager.java
-+++ b/src/main/java/net/minecraft/world/item/crafting/RecipeManager.java
-@@ -81,7 +81,7 @@ public class RecipeManager extends SimpleJsonResourceReloadListener {
-         }
- 
-         this.recipes = (Map) map1.entrySet().stream().collect(ImmutableMap.toImmutableMap(Entry::getKey, (entry1) -> {
--            return (entry1.getValue()); // CraftBukkit
-+            return entry1.getValue(); // CraftBukkit // Paper - decompile fix - *shrugs internally* // todo: is this needed anymore?
-         }));
-         this.byName = Maps.newHashMap(builder.build()); // CraftBukkit
-         RecipeManager.LOGGER.info("Loaded {} recipes", map1.size());
+diff --git a/src/main/java/net/minecraft/world/entity/monster/Pillager.java b/src/main/java/net/minecraft/world/entity/monster/Pillager.java
+index 328888db50c7ef7cae8305a6aa19d1af9a8c880d..ac411202c0029052a962b51b015da191b124de5f 100644
+--- a/src/main/java/net/minecraft/world/entity/monster/Pillager.java
++++ b/src/main/java/net/minecraft/world/entity/monster/Pillager.java
+@@ -62,7 +62,7 @@ public class Pillager extends AbstractIllager implements CrossbowAttackMob, Inve
+     protected void registerGoals() {
+         super.registerGoals();
+         this.goalSelector.addGoal(0, new FloatGoal(this));
+-        this.goalSelector.addGoal(2, new Raider.HoldGroundAttackGoal(this, this, 10.0F));
++        this.goalSelector.addGoal(2, new Raider.HoldGroundAttackGoal(this, 10.0F)); // Paper - decomp fix
+         this.goalSelector.addGoal(3, new RangedCrossbowAttackGoal<>(this, 1.0D, 8.0F));
+         this.goalSelector.addGoal(8, new RandomStrollGoal(this, 0.6D));
+         this.goalSelector.addGoal(9, new LookAtPlayerGoal(this, Player.class, 15.0F, 1.0F));
