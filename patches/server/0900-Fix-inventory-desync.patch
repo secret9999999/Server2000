@@ -4,6 +4,19 @@ Date: Wed, 23 Aug 2023 13:22:09 -0700
 Subject: [PATCH] Fix inventory desync
 
 
+diff --git a/src/main/java/net/minecraft/world/entity/LivingEntity.java b/src/main/java/net/minecraft/world/entity/LivingEntity.java
+index d84193a413fbdf76ddb70282d92e6d45b0424384..391a3512eb299f45d7b95e12b6a5bc0e36520acc 100644
+--- a/src/main/java/net/minecraft/world/entity/LivingEntity.java
++++ b/src/main/java/net/minecraft/world/entity/LivingEntity.java
+@@ -4032,7 +4032,7 @@ public abstract class LivingEntity extends Entity implements Attackable {
+             if (this.useItem.useOnRelease()) {
+                 this.updatingUsingItem();
+             }
+-        }
++        } else if (this instanceof ServerPlayer player) player.containerMenu.sendAllDataToRemote(); // Paper - Fix inventory desync
+ 
+         this.stopUsingItem();
+     }
 diff --git a/src/main/java/net/minecraft/world/entity/Mob.java b/src/main/java/net/minecraft/world/entity/Mob.java
 index 7b10bb9cbf6f2b4a70ddaa0ba4bc7409a17f3f09..66814adfb2cf92067702fc2695b083661cf859c0 100644
 --- a/src/main/java/net/minecraft/world/entity/Mob.java
@@ -29,3 +42,20 @@ index fc7d978f9e57814a933b9cb725c3af1e7d403795..96fb69ec6db2e7c8c728435f0c537b07
                                      ((ServerPlayer) entityhuman).getBukkitEntity().updateInventory(); // SPIGOT-4541
                                  }
                                  return InteractionResult.FAIL;
+diff --git a/src/main/java/net/minecraft/world/item/ProjectileWeaponItem.java b/src/main/java/net/minecraft/world/item/ProjectileWeaponItem.java
+index f91ce87491b18f4f4ae6458192d1f320b308102a..147e9cd26c928099b87dc5a25ba45e10e768b046 100644
+--- a/src/main/java/net/minecraft/world/item/ProjectileWeaponItem.java
++++ b/src/main/java/net/minecraft/world/item/ProjectileWeaponItem.java
+@@ -67,6 +67,12 @@ public abstract class ProjectileWeaponItem extends Item {
+                 org.bukkit.event.entity.EntityShootBowEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callEntityShootBowEvent(shooter, stack, itemstack1, iprojectile, hand, speed, true);
+                 if (event.isCancelled()) {
+                     event.getProjectile().remove();
++                    // Paper start - Fix inventory desync
++                    if (shooter instanceof net.minecraft.server.level.ServerPlayer player) {
++                        player.getInventory().add(itemstack1);
++                        player.containerMenu.sendAllDataToRemote();
++                    }
++                    // Paper end - Fix inventory desync
+                     return;
+                 }
+ 
