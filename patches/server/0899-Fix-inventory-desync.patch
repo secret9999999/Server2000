@@ -5,10 +5,10 @@ Subject: [PATCH] Fix inventory desync
 
 
 diff --git a/src/main/java/net/minecraft/world/entity/Mob.java b/src/main/java/net/minecraft/world/entity/Mob.java
-index 7b10bb9cbf6f2b4a70ddaa0ba4bc7409a17f3f09..66814adfb2cf92067702fc2695b083661cf859c0 100644
+index 102f53d0d292496597415dc72b1b814543f7f856..b04ee23f3d971d5a8cd275c9f91b4c2962889684 100644
 --- a/src/main/java/net/minecraft/world/entity/Mob.java
 +++ b/src/main/java/net/minecraft/world/entity/Mob.java
-@@ -1468,6 +1468,7 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Targeti
+@@ -1475,6 +1475,7 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Targeti
              if (CraftEventFactory.callPlayerLeashEntityEvent(this, player, player, hand).isCancelled()) {
                  ((ServerPlayer) player).resendItemInHands(); // SPIGOT-7615: Resend to fix client desync with used item
                  ((ServerPlayer) player).connection.send(new ClientboundSetEntityLinkPacket(this, this.getLeashHolder()));

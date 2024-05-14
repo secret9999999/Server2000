@@ -5,10 +5,10 @@ Subject: [PATCH] Expand EntityUnleashEvent
 
 
 diff --git a/src/main/java/net/minecraft/world/entity/Mob.java b/src/main/java/net/minecraft/world/entity/Mob.java
-index 4c0f7741e199e4bb03767effda669bbbc9f0d233..7b10bb9cbf6f2b4a70ddaa0ba4bc7409a17f3f09 100644
+index 9c802ebb7edf41ffa58c6bd61a5002aa18910054..102f53d0d292496597415dc72b1b814543f7f856 100644
 --- a/src/main/java/net/minecraft/world/entity/Mob.java
 +++ b/src/main/java/net/minecraft/world/entity/Mob.java
-@@ -1431,12 +1431,15 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Targeti
+@@ -1438,12 +1438,15 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Targeti
              return InteractionResult.PASS;
          } else if (this.getLeashHolder() == player) {
              // CraftBukkit start - fire PlayerUnleashEntityEvent
@@ -26,7 +26,7 @@ index 4c0f7741e199e4bb03767effda669bbbc9f0d233..7b10bb9cbf6f2b4a70ddaa0ba4bc7409
              this.gameEvent(GameEvent.ENTITY_INTERACT, player);
              return InteractionResult.sidedSuccess(this.level().isClientSide);
          } else {
-@@ -1605,8 +1608,11 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Targeti
+@@ -1612,8 +1615,11 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Targeti
  
          if (this.leashHolder != null) {
              if (!this.isAlive() || !this.leashHolder.isAlive()) {
@@ -40,7 +40,7 @@ index 4c0f7741e199e4bb03767effda669bbbc9f0d233..7b10bb9cbf6f2b4a70ddaa0ba4bc7409
              }
  
          }
-@@ -1674,8 +1680,11 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Targeti
+@@ -1681,8 +1687,11 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Targeti
          boolean flag1 = super.startRiding(entity, force);
  
          if (flag1 && this.isLeashed()) {
@@ -54,7 +54,7 @@ index 4c0f7741e199e4bb03767effda669bbbc9f0d233..7b10bb9cbf6f2b4a70ddaa0ba4bc7409
          }
  
          return flag1;
-@@ -1852,8 +1861,11 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Targeti
+@@ -1859,8 +1868,11 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Targeti
      @Override
      protected void removeAfterChangingDimensions() {
          super.removeAfterChangingDimensions();

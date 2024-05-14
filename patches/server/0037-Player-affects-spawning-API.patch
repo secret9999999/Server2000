@@ -21,7 +21,7 @@ index 3126e8cab3c40e3af47f4c8925e1c6a9523309ba..3207166061bf9c4d7bf3f38e5a9f7aff
      public static Predicate<Entity> withinDistance(double x, double y, double z, double max) {
          double d4 = max * max;
 diff --git a/src/main/java/net/minecraft/world/entity/Mob.java b/src/main/java/net/minecraft/world/entity/Mob.java
-index c8ff4b01186f924473b9ffde948d7f0573e8d56f..426fa1798087ab1fb4198bd036f498606dce7c3f 100644
+index 52f3acbefd49eb8eda008fb616d3447cbc8f02e8..1484df1c9573bb8ecaa9b00129346fd642efcffa 100644
 --- a/src/main/java/net/minecraft/world/entity/Mob.java
 +++ b/src/main/java/net/minecraft/world/entity/Mob.java
 @@ -907,7 +907,7 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Targeti
@@ -32,7 +32,7 @@ index c8ff4b01186f924473b9ffde948d7f0573e8d56f..426fa1798087ab1fb4198bd036f49860
 +            Player entityhuman = this.level().findNearbyPlayer(this, -1.0D, EntitySelector.PLAYER_AFFECTS_SPAWNING); // Paper - Affects Spawning API
  
              if (entityhuman != null) {
-                 double d0 = entityhuman.distanceToSqr((Entity) this);
+                 // Paper start - Configurable despawn distances
 diff --git a/src/main/java/net/minecraft/world/entity/animal/horse/SkeletonTrapGoal.java b/src/main/java/net/minecraft/world/entity/animal/horse/SkeletonTrapGoal.java
 index c01d9751828d03f37f36b52d84336bd0ee008e8b..f3a02925833733ae50d706ffc681dd05344a7687 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/horse/SkeletonTrapGoal.java

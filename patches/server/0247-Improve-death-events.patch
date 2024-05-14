@@ -232,10 +232,10 @@ index 12e205a01366a5825fd1b99097f1cef75dc0408e..3b9bd1e1043d7388c03936d5b131e9e2
      // CraftBukkit start
      public int getExpReward() {
 diff --git a/src/main/java/net/minecraft/world/entity/Mob.java b/src/main/java/net/minecraft/world/entity/Mob.java
-index e159da8a8dcff686e93d09a15141233915c264bf..4c0f7741e199e4bb03767effda669bbbc9f0d233 100644
+index d0845cacd346c5274d71b8c3e702ce90343026c6..9c802ebb7edf41ffa58c6bd61a5002aa18910054 100644
 --- a/src/main/java/net/minecraft/world/entity/Mob.java
 +++ b/src/main/java/net/minecraft/world/entity/Mob.java
-@@ -1170,6 +1170,12 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Targeti
+@@ -1177,6 +1177,12 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Targeti
  
      }
  
@@ -248,7 +248,7 @@ index e159da8a8dcff686e93d09a15141233915c264bf..4c0f7741e199e4bb03767effda669bbb
      @Override
      protected void dropCustomDeathLoot(DamageSource source, int lootingMultiplier, boolean allowDrops) {
          super.dropCustomDeathLoot(source, lootingMultiplier, allowDrops);
-@@ -1178,6 +1184,7 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Targeti
+@@ -1185,6 +1191,7 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Targeti
  
          for (int k = 0; k < j; ++k) {
              EquipmentSlot enumitemslot = aenumitemslot[k];
@@ -256,7 +256,7 @@ index e159da8a8dcff686e93d09a15141233915c264bf..4c0f7741e199e4bb03767effda669bbb
              ItemStack itemstack = this.getItemBySlot(enumitemslot);
              float f = this.getEquipmentDropChance(enumitemslot);
              boolean flag1 = f > 1.0F;
-@@ -1188,7 +1195,13 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Targeti
+@@ -1195,7 +1202,13 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Targeti
                  }
  
                  this.spawnAtLocation(itemstack);
