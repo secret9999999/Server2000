@@ -10,22 +10,25 @@ public net.minecraft.world.inventory.AbstractContainerMenu quickcraftType
 public net.minecraft.world.inventory.AbstractContainerMenu resetQuickCraft()V
 
 diff --git a/src/main/java/net/minecraft/server/network/ServerGamePacketListenerImpl.java b/src/main/java/net/minecraft/server/network/ServerGamePacketListenerImpl.java
-index c450447585af4c8cdc87abe871c229ff895c3e53..efd87b4ff8514ed22a895a2caeacfc5efd1d3d94 100644
+index c450447585af4c8cdc87abe871c229ff895c3e53..7d15d17a2733668b603cf69ac44e84e54425356c 100644
 --- a/src/main/java/net/minecraft/server/network/ServerGamePacketListenerImpl.java
 +++ b/src/main/java/net/minecraft/server/network/ServerGamePacketListenerImpl.java
-@@ -3118,6 +3118,25 @@ public class ServerGamePacketListenerImpl extends ServerCommonPacketListenerImpl
+@@ -3118,6 +3118,28 @@ public class ServerGamePacketListenerImpl extends ServerCommonPacketListenerImpl
                              }
                              break;
                          case QUICK_CRAFT:
 +                            // Paper start - Fix CraftBukkit drag system
++                            // this logic is mirroring the logic in AbstractContainerMenu#doClick
++                            // all the way down to where it recursively calls doClick if the drag
++                            // only affects one slot
 +                            AbstractContainerMenu containerMenu = this.player.containerMenu;
 +                            int currentStatus = this.player.containerMenu.quickcraftStatus;
 +                            int newStatus = AbstractContainerMenu.getQuickcraftHeader(packet.getButtonNum());
-+                            if ((currentStatus != 1 || newStatus != 2 && currentStatus != newStatus)) {
++                            if ((currentStatus != AbstractContainerMenu.QUICKCRAFT_HEADER_CONTINUE || newStatus != AbstractContainerMenu.QUICKCRAFT_HEADER_END) && currentStatus != newStatus) {
 +                            } else if (containerMenu.getCarried().isEmpty()) {
-+                            } else if (newStatus == 0) {
-+                            } else if (newStatus == 1) {
-+                            } else if (newStatus == 2) {
++                            } else if (newStatus == AbstractContainerMenu.QUICKCRAFT_HEADER_START) {
++                            } else if (newStatus == AbstractContainerMenu.QUICKCRAFT_HEADER_CONTINUE) {
++                            } else if (newStatus == AbstractContainerMenu.QUICKCRAFT_HEADER_END) {
 +                                if (!this.player.containerMenu.quickcraftSlots.isEmpty()) {
 +                                    if (this.player.containerMenu.quickcraftSlots.size() == 1) {
 +                                        int index = containerMenu.quickcraftSlots.iterator().next().index;
