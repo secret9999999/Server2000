@@ -839,7 +839,7 @@ index 8e0dd4b7a7a25a8beb27b507047bc48d8227627c..77489c3ffaa3a72d4cf105499a77150f
      }
  }
 diff --git a/src/main/java/org/bukkit/craftbukkit/inventory/CraftMetaItem.java b/src/main/java/org/bukkit/craftbukkit/inventory/CraftMetaItem.java
-index 12a193db7475870e5107c86c7611bb4b92feacb8..c235b80b94fdb6c77766016114713cd501ffd67c 100644
+index 12a193db7475870e5107c86c7611bb4b92feacb8..8738e49b2a31ab100fed8b3ecc48e7960916af0d 100644
 --- a/src/main/java/org/bukkit/craftbukkit/inventory/CraftMetaItem.java
 +++ b/src/main/java/org/bukkit/craftbukkit/inventory/CraftMetaItem.java
 @@ -172,9 +172,10 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
@@ -957,7 +957,7 @@ index 12a193db7475870e5107c86c7611bb4b92feacb8..c235b80b94fdb6c77766016114713cd5
          return this.attributeModifiers.containsKey(attribute) ? ImmutableList.copyOf(this.attributeModifiers.get(attribute)) : null;
      }
  
-@@ -1341,10 +1349,12 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
+@@ -1341,22 +1349,33 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
      public boolean addAttributeModifier(@Nonnull Attribute attribute, @Nonnull AttributeModifier modifier) {
          Preconditions.checkNotNull(attribute, "Attribute cannot be null");
          Preconditions.checkNotNull(modifier, "AttributeModifier cannot be null");
@@ -971,7 +971,17 @@ index 12a193db7475870e5107c86c7611bb4b92feacb8..c235b80b94fdb6c77766016114713cd5
          return this.attributeModifiers.put(attribute, modifier);
      }
  
-@@ -1355,8 +1365,11 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
+     @Override
+     public void setAttributeModifiers(@Nullable Multimap<Attribute, AttributeModifier> attributeModifiers) {
+-        if (attributeModifiers == null || attributeModifiers.isEmpty()) {
++        // Paper start - distinguish between null and empty
++        if (attributeModifiers == null) {
++            this.attributeModifiers = null;
++            return;
++        }
++        if (attributeModifiers.isEmpty()) {
++            // Paper end - distinguish between null and empty
+             this.attributeModifiers = LinkedHashMultimap.create();
              return;
          }
  
@@ -985,7 +995,7 @@ index 12a193db7475870e5107c86c7611bb4b92feacb8..c235b80b94fdb6c77766016114713cd5
  
          Iterator<Map.Entry<Attribute, AttributeModifier>> iterator = attributeModifiers.entries().iterator();
          while (iterator.hasNext()) {
-@@ -1366,6 +1379,7 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
+@@ -1366,6 +1385,7 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
                  iterator.remove();
                  continue;
              }
@@ -993,7 +1003,7 @@ index 12a193db7475870e5107c86c7611bb4b92feacb8..c235b80b94fdb6c77766016114713cd5
              this.attributeModifiers.put(next.getKey(), next.getValue());
          }
      }
-@@ -1373,13 +1387,13 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
+@@ -1373,13 +1393,13 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
      @Override
      public boolean removeAttributeModifier(@Nonnull Attribute attribute) {
          Preconditions.checkNotNull(attribute, "Attribute cannot be null");
@@ -1009,7 +1019,7 @@ index 12a193db7475870e5107c86c7611bb4b92feacb8..c235b80b94fdb6c77766016114713cd5
          int removed = 0;
          Iterator<Map.Entry<Attribute, AttributeModifier>> iter = this.attributeModifiers.entries().iterator();
  
-@@ -1399,7 +1413,7 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
+@@ -1399,7 +1419,7 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
      public boolean removeAttributeModifier(@Nonnull Attribute attribute, @Nonnull AttributeModifier modifier) {
          Preconditions.checkNotNull(attribute, "Attribute cannot be null");
          Preconditions.checkNotNull(modifier, "AttributeModifier cannot be null");
@@ -1018,7 +1028,7 @@ index 12a193db7475870e5107c86c7611bb4b92feacb8..c235b80b94fdb6c77766016114713cd5
          int removed = 0;
          Iterator<Map.Entry<Attribute, AttributeModifier>> iter = this.attributeModifiers.entries().iterator();
  
-@@ -1421,7 +1435,7 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
+@@ -1421,7 +1441,7 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
  
      @Override
      public String getAsString() {
@@ -1027,7 +1037,7 @@ index 12a193db7475870e5107c86c7611bb4b92feacb8..c235b80b94fdb6c77766016114713cd5
          this.applyToItem(tag);
          DataComponentPatch patch = tag.build();
          Tag nbt = DataComponentPatch.CODEC.encodeStart(MinecraftServer.getDefaultRegistryAccess().createSerializationContext(NbtOps.INSTANCE), patch).getOrThrow();
-@@ -1430,7 +1444,7 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
+@@ -1430,7 +1450,7 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
  
      @Override
      public String getAsComponentString() {
@@ -1036,7 +1046,7 @@ index 12a193db7475870e5107c86c7611bb4b92feacb8..c235b80b94fdb6c77766016114713cd5
          this.applyToItem(tag);
          DataComponentPatch patch = tag.build();
  
-@@ -1470,6 +1484,7 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
+@@ -1470,6 +1490,7 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
          if (first == null || second == null) {
              return false;
          }
@@ -1044,7 +1054,7 @@ index 12a193db7475870e5107c86c7611bb4b92feacb8..c235b80b94fdb6c77766016114713cd5
          for (Map.Entry<Attribute, AttributeModifier> entry : first.entries()) {
              if (!second.containsEntry(entry.getKey(), entry.getValue())) {
                  return false;
-@@ -1495,6 +1510,8 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
+@@ -1495,6 +1516,8 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
  
      @Override
      public void setDamage(int damage) {
@@ -1053,7 +1063,7 @@ index 12a193db7475870e5107c86c7611bb4b92feacb8..c235b80b94fdb6c77766016114713cd5
          this.damage = damage;
      }
  
-@@ -1511,6 +1528,7 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
+@@ -1511,6 +1534,7 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
  
      @Override
      public void setMaxDamage(Integer maxDamage) {
@@ -1061,7 +1071,7 @@ index 12a193db7475870e5107c86c7611bb4b92feacb8..c235b80b94fdb6c77766016114713cd5
          this.maxDamage = maxDamage;
      }
  
-@@ -1542,7 +1560,7 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
+@@ -1542,7 +1566,7 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
                  && (this.hasCustomModelData() ? that.hasCustomModelData() && this.customModelData.equals(that.customModelData) : !that.hasCustomModelData())
                  && (this.hasBlockData() ? that.hasBlockData() && this.blockData.equals(that.blockData) : !that.hasBlockData())
                  && (this.hasRepairCost() ? that.hasRepairCost() && this.repairCost == that.repairCost : !that.hasRepairCost())
@@ -1070,7 +1080,7 @@ index 12a193db7475870e5107c86c7611bb4b92feacb8..c235b80b94fdb6c77766016114713cd5
                  && (this.unhandledTags.equals(that.unhandledTags))
                  && (Objects.equals(this.customTag, that.customTag))
                  && (this.persistentDataContainer.equals(that.persistentDataContainer))
-@@ -1598,8 +1616,8 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
+@@ -1598,8 +1622,8 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
          hash = 61 * hash + (this.hasRarity() ? this.rarity.hashCode() : 0);
          hash = 61 * hash + (this.hasFood() ? this.food.hashCode() : 0);
          hash = 61 * hash + (this.hasDamage() ? this.damage : 0);
@@ -1081,7 +1091,7 @@ index 12a193db7475870e5107c86c7611bb4b92feacb8..c235b80b94fdb6c77766016114713cd5
          hash = 61 * hash + (this.canPlaceOnPredicates != null ? this.canPlaceOnPredicates.hashCode() : 0); // Paper
          hash = 61 * hash + (this.canBreakPredicates != null ? this.canBreakPredicates.hashCode() : 0); // Paper
          hash = 61 * hash + this.version;
-@@ -1619,7 +1637,7 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
+@@ -1619,7 +1643,7 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
              if (this.enchantments != null) {
                  clone.enchantments = new EnchantmentMap(this.enchantments); // Paper
              }
@@ -1090,7 +1100,7 @@ index 12a193db7475870e5107c86c7611bb4b92feacb8..c235b80b94fdb6c77766016114713cd5
                  clone.attributeModifiers = LinkedHashMultimap.create(this.attributeModifiers);
              }
              if (this.customTag != null) {
-@@ -1823,7 +1841,7 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
+@@ -1823,7 +1847,7 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
      }
  
      static void serializeModifiers(Multimap<Attribute, AttributeModifier> modifiers, ImmutableMap.Builder<String, Object> builder, ItemMetaKey key) {
@@ -1099,7 +1109,7 @@ index 12a193db7475870e5107c86c7611bb4b92feacb8..c235b80b94fdb6c77766016114713cd5
              return;
          }
  
-@@ -1905,7 +1923,7 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
+@@ -1905,7 +1929,7 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
      // Paper start - improve checking handled tags
      @org.jetbrains.annotations.VisibleForTesting
      public static final Map<Class<? extends CraftMetaItem>, Set<DataComponentType<?>>> HANDLED_DCTS_PER_TYPE = new HashMap<>();
@@ -1108,7 +1118,7 @@ index 12a193db7475870e5107c86c7611bb4b92feacb8..c235b80b94fdb6c77766016114713cd5
          CraftMetaItem.NAME.TYPE,
          CraftMetaItem.ITEM_NAME.TYPE,
          CraftMetaItem.LORE.TYPE,
-@@ -1971,7 +1989,12 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
+@@ -1971,7 +1995,12 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
      // Paper end - improve checking handled data component types
  
      protected static <T> Optional<? extends T> getOrEmpty(DataComponentPatch tag, ItemMetaKeyType<T> type) {

@@ -32,7 +32,7 @@ index 9d74577af071954e1e37201a96368c1360076209..eafa54c870c3e2aef30c3f9f96f51660
                  throw new IllegalArgumentException("Not implemented. This is a bug");
          }
 diff --git a/src/main/java/org/bukkit/craftbukkit/inventory/CraftMetaItem.java b/src/main/java/org/bukkit/craftbukkit/inventory/CraftMetaItem.java
-index c235b80b94fdb6c77766016114713cd501ffd67c..d5789326d70bb8b029c5448270bbaa6faf52e6e1 100644
+index 8738e49b2a31ab100fed8b3ecc48e7960916af0d..2b586d1fd649fcb62c7c62c8a96b222be1826ac3 100644
 --- a/src/main/java/org/bukkit/craftbukkit/inventory/CraftMetaItem.java
 +++ b/src/main/java/org/bukkit/craftbukkit/inventory/CraftMetaItem.java
 @@ -1331,7 +1331,7 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
@@ -44,7 +44,7 @@ index c235b80b94fdb6c77766016114713cd501ffd67c..d5789326d70bb8b029c5448270bbaa6f
                  result.put(entry.getKey(), entry.getValue());
              }
          }
-@@ -1399,9 +1399,7 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
+@@ -1405,9 +1405,7 @@ class CraftMetaItem implements ItemMeta, Damageable, Repairable, BlockDataMeta {
  
          while (iter.hasNext()) {
              Map.Entry<Attribute, AttributeModifier> entry = iter.next();

@@ -19,3 +19,19 @@ index 637fa73d4366c2d88e2716e5c8d3465706d788a7..0f03c546ecdd6383fb36a362d18d6fb5
          this.flicker = flicker;
          this.trail = trail;
          this.colors = colors;
+diff --git a/src/main/java/org/bukkit/inventory/meta/ItemMeta.java b/src/main/java/org/bukkit/inventory/meta/ItemMeta.java
+index a317111df3b6cda00dc700c68f4c2b789c51885d..58fe78232e8e00466c641b2ff0388dc4d38b9c26 100644
+--- a/src/main/java/org/bukkit/inventory/meta/ItemMeta.java
++++ b/src/main/java/org/bukkit/inventory/meta/ItemMeta.java
+@@ -611,8 +611,9 @@ public interface ItemMeta extends Cloneable, ConfigurationSerializable, Persiste
+ 
+     /**
+      * Set all {@link Attribute}s and their {@link AttributeModifier}s.
+-     * To clear all currently set Attributes and AttributeModifiers use
+-     * null or an empty Multimap.
++     * To clear all custom attribute modifiers, use {@code null}. To set
++     * no modifiers (which will override the default modifiers), use an
++     * empty map.
+      * If not null nor empty, this will filter all entries that are not-null
+      * and add them to the ItemStack.
+      *
