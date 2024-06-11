@@ -144,7 +144,7 @@ index dc66bd69646ac949d1386ce8f6ff913e9475439d..4482e8f2c617c2f51b2b53762e775d11
 +    // Paper end
  }
 diff --git a/src/main/java/org/bukkit/Material.java b/src/main/java/org/bukkit/Material.java
-index feebabf946913263461e1d0f13a478cf4bfd0f68..ebf505bbdc1b44d1fcd3c30f4143f6e5b89d09e9 100644
+index 7458278ad620d534b205438062327463caaa9bfc..9dfa9236f9689faa275d4a9f6b8018c824b20492 100644
 --- a/src/main/java/org/bukkit/Material.java
 +++ b/src/main/java/org/bukkit/Material.java
 @@ -129,7 +129,7 @@ import org.jetbrains.annotations.Nullable;
@@ -509,7 +509,7 @@ index 5bd252c0ae3b09fe141d131360c67bb9bfbf5422..78587d9fabe6371a23a7963917b054db
 +
  }
 diff --git a/src/main/java/org/bukkit/inventory/ItemStack.java b/src/main/java/org/bukkit/inventory/ItemStack.java
-index 066f99a1f4cc42cf0e87d495f97a0685817dfa18..23686519b8c1338dd6e9f1c5a0e73467c0b59a4f 100644
+index fdc23ef0659f974efc6a3e8016da9104e2886a28..f90b588e1a4f48ed8bf7f8a391b49bbd4bfb4e9a 100644
 --- a/src/main/java/org/bukkit/inventory/ItemStack.java
 +++ b/src/main/java/org/bukkit/inventory/ItemStack.java
 @@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
@@ -518,10 +518,10 @@ index 066f99a1f4cc42cf0e87d495f97a0685817dfa18..23686519b8c1338dd6e9f1c5a0e73467
   */
 -public class ItemStack implements Cloneable, ConfigurationSerializable, Translatable, net.kyori.adventure.text.event.HoverEventSource<net.kyori.adventure.text.event.HoverEvent.ShowItem> { // Paper
 +public class ItemStack implements Cloneable, ConfigurationSerializable, Translatable, net.kyori.adventure.text.event.HoverEventSource<net.kyori.adventure.text.event.HoverEvent.ShowItem>, net.kyori.adventure.translation.Translatable { // Paper
+     private static final byte ARRAY_SERIALIZATION_VERSION = 1; // Paper
      private Material type = Material.AIR;
      private int amount = 0;
-     private MaterialData data = null;
-@@ -626,6 +626,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
+@@ -627,6 +627,7 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
  
      @Override
      @NotNull
@@ -529,7 +529,7 @@ index 066f99a1f4cc42cf0e87d495f97a0685817dfa18..23686519b8c1338dd6e9f1c5a0e73467
      public String getTranslationKey() {
          return Bukkit.getUnsafe().getTranslationKey(this);
      }
-@@ -885,5 +886,16 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
+@@ -966,5 +967,16 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
          ItemMeta itemMeta = getItemMeta();
          return itemMeta != null && itemMeta.hasItemFlag(flag);
      }

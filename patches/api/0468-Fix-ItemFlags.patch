@@ -47,10 +47,10 @@ index a435f6c8947e4ac50b8c04f37b107055970937dd..92e30c281eab4801298b280bd388a039
      /**
       * Setting to show/hide item-specific information, including, but not limited to:
 diff --git a/src/main/java/org/bukkit/inventory/ItemStack.java b/src/main/java/org/bukkit/inventory/ItemStack.java
-index 4818b4e6583414fa98194bb6f3c5dbd4bd95be3a..c64413a6740b604282984dea2a8430a6e7478d68 100644
+index 6a7f41755b3b06ccf32802786357ce6f23d64b94..a88aa9e60bba4da37ecc57b850cd970a8d453583 100644
 --- a/src/main/java/org/bukkit/inventory/ItemStack.java
 +++ b/src/main/java/org/bukkit/inventory/ItemStack.java
-@@ -581,6 +581,13 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
+@@ -582,6 +582,13 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
              Object raw = args.get("meta");
              if (raw instanceof ItemMeta) {
                  ((ItemMeta) raw).setVersion(version);

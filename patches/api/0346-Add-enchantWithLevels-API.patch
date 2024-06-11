@@ -70,10 +70,10 @@ index a9ed193bbb85a5d363fd315e198430809cdbddc5..229dbdcb9094508e02d7a5ea1761d576
 +    // Paper end - enchantWithLevels API
  }
 diff --git a/src/main/java/org/bukkit/inventory/ItemStack.java b/src/main/java/org/bukkit/inventory/ItemStack.java
-index 5fb8f7c1b79bd256925cb68cccfe0b974fb84043..105cf1bf6e8b44846cdd3a8881fed36007daaa22 100644
+index 2e98a00627df169cb4ef6bb5c48b9d40f985f785..8136ba4bb66969cf7043cc3b1211a87c0fc2295f 100644
 --- a/src/main/java/org/bukkit/inventory/ItemStack.java
 +++ b/src/main/java/org/bukkit/inventory/ItemStack.java
-@@ -676,6 +676,24 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
+@@ -677,6 +677,24 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      }
  
      // Paper start

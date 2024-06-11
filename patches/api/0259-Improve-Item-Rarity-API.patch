@@ -43,7 +43,7 @@ index 0000000000000000000000000000000000000000..f1cd5a4f37eee8975ac3d0421b524afc
 +    }
 +}
 diff --git a/src/main/java/org/bukkit/Material.java b/src/main/java/org/bukkit/Material.java
-index ebf505bbdc1b44d1fcd3c30f4143f6e5b89d09e9..04cb8279f2296cc42405355c7c1f120e761202c4 100644
+index 9dfa9236f9689faa275d4a9f6b8018c824b20492..9050d986b75482b5884a206f0980d1a23680001c 100644
 --- a/src/main/java/org/bukkit/Material.java
 +++ b/src/main/java/org/bukkit/Material.java
 @@ -4756,6 +4756,21 @@ public enum Material implements Keyed, Translatable, net.kyori.adventure.transla
@@ -110,10 +110,10 @@ index e7931f73f10fe35ebd5fe4a04b036d53bb117ebd..cbce835ed6d44e5b8c9aaae4e36a77f8
 +    // Paper end
  }
 diff --git a/src/main/java/org/bukkit/inventory/ItemStack.java b/src/main/java/org/bukkit/inventory/ItemStack.java
-index 23686519b8c1338dd6e9f1c5a0e73467c0b59a4f..f0221815cbd30f3ccaacc87a57403491b55de128 100644
+index f90b588e1a4f48ed8bf7f8a391b49bbd4bfb4e9a..c9964a599165d23b2a8b4041b6eba5a76e15ff81 100644
 --- a/src/main/java/org/bukkit/inventory/ItemStack.java
 +++ b/src/main/java/org/bukkit/inventory/ItemStack.java
-@@ -897,5 +897,17 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
+@@ -978,5 +978,17 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      public @NotNull String translationKey() {
          return Bukkit.getUnsafe().getTranslationKey(this);
      }

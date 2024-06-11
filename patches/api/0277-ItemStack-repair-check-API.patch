@@ -25,10 +25,10 @@ index 8635846c9f672e39f0929eec7bf83b22536ed284..51f1a09164d501de6d2561ed90175f2c
      // Paper end
  }
 diff --git a/src/main/java/org/bukkit/inventory/ItemStack.java b/src/main/java/org/bukkit/inventory/ItemStack.java
-index f0221815cbd30f3ccaacc87a57403491b55de128..ca2dac7b377ea098158ff3c84fd47f405b636869 100644
+index c9964a599165d23b2a8b4041b6eba5a76e15ff81..6edc6f2c38f0e063929d368b37f2ce9b8422c56a 100644
 --- a/src/main/java/org/bukkit/inventory/ItemStack.java
 +++ b/src/main/java/org/bukkit/inventory/ItemStack.java
-@@ -909,5 +909,27 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
+@@ -990,5 +990,27 @@ public class ItemStack implements Cloneable, ConfigurationSerializable, Translat
      public io.papermc.paper.inventory.ItemRarity getRarity() {
          return io.papermc.paper.inventory.ItemRarity.valueOf(this.getItemMeta().getRarity().name());
      }
