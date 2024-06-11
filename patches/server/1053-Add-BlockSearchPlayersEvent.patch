@@ -1,0 +1,73 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Tamion <70228790+notTamion@users.noreply.github.com>
+Date: Wed, 28 Feb 2024 18:49:24 +0100
+Subject: [PATCH] Add BlockSearchPlayersEvent
+
+
+diff --git a/src/main/java/net/minecraft/world/level/block/entity/BeaconBlockEntity.java b/src/main/java/net/minecraft/world/level/block/entity/BeaconBlockEntity.java
+index a6ffbbc1b5021564864e42c0756342352c2b8290..ca1d42fdecfa16c031f1e21f32bf3f84581f9508 100644
+--- a/src/main/java/net/minecraft/world/level/block/entity/BeaconBlockEntity.java
++++ b/src/main/java/net/minecraft/world/level/block/entity/BeaconBlockEntity.java
+@@ -396,7 +396,19 @@ public class BeaconBlockEntity extends BlockEntity implements MenuProvider, Name
+             byte b0 = BeaconBlockEntity.getAmplification(beaconLevel, primaryEffect, secondaryEffect);
+ 
+             int j = BeaconBlockEntity.getLevel(beaconLevel);
+-            List list = BeaconBlockEntity.getHumansInRange(world, pos, beaconLevel, blockEntity); // Paper - Custom beacon ranges
++            // List list = BeaconBlockEntity.getHumansInRange(world, pos, beaconLevel, blockEntity); // Paper - Custom beacon ranges // Paper - search entity events - moved to LSC
++            // Paper start - Add BlockSearchPlayersEvent
++            io.papermc.paper.event.block.BlockSearchPlayersEvent event = new io.papermc.paper.event.block.BlockSearchPlayersEvent(
++                org.bukkit.craftbukkit.block.CraftBlock.at(world, pos),
++                io.papermc.paper.util.MCUtil.<ServerPlayer, org.bukkit.entity.Player>lazyMemoizingForwardingList(
++                    () -> BeaconBlockEntity.getHumansInRange(world, pos, beaconLevel, blockEntity), // Paper - Custom beacon ranges
++                    ServerPlayer::getBukkitEntity,
++                    p -> ((org.bukkit.craftbukkit.entity.CraftPlayer) p).getHandle()
++                )
++            );
++            event.callEvent();
++            final List<ServerPlayer> list = com.google.common.collect.Lists.transform(event.getPlayers(), p -> ((org.bukkit.craftbukkit.entity.CraftPlayer) p).getHandle());
++            // Paper end - Add BlockSearchPlayersEvent
+ 
+             BeaconBlockEntity.applyEffect(list, primaryEffect, j, b0, true, pos); // Paper - BeaconEffectEvent
+ 
+diff --git a/src/main/java/net/minecraft/world/level/block/entity/ConduitBlockEntity.java b/src/main/java/net/minecraft/world/level/block/entity/ConduitBlockEntity.java
+index 73e532dc998e5701c1a73da846da3d3a79871b81..0aae0be3e0ffbe4f139bcd6d710b20158992129f 100644
+--- a/src/main/java/net/minecraft/world/level/block/entity/ConduitBlockEntity.java
++++ b/src/main/java/net/minecraft/world/level/block/entity/ConduitBlockEntity.java
+@@ -205,7 +205,27 @@ public class ConduitBlockEntity extends BlockEntity {
+         int l = blockposition.getY();
+         int i1 = blockposition.getZ();
+         AABB axisalignedbb = (new AABB((double) k, (double) l, (double) i1, (double) (k + 1), (double) (l + 1), (double) (i1 + 1))).inflate((double) j).expandTowards(0.0D, (double) world.getHeight(), 0.0D);
+-        List<Player> list1 = world.getEntitiesOfClass(Player.class, axisalignedbb);
++        // Paper start - Add BlockSearchPlayersEvent
++        // List<Player> list1 = world.getEntitiesOfClass(Player.class, axisalignedbb);
++        io.papermc.paper.event.block.BlockSearchPlayersEvent event = new io.papermc.paper.event.block.BlockSearchPlayersEvent(
++            org.bukkit.craftbukkit.block.CraftBlock.at(world, blockposition),
++            io.papermc.paper.util.MCUtil.lazyMemoizingForwardingList(
++                () -> io.papermc.paper.util.MCUtil.copyListAndRemoveIf(
++                    world.getEntitiesOfClass(Player.class, axisalignedbb),
++                    java.util.function.Predicate.not(
++                        entityhuman -> blockposition.closerThan(entityhuman.blockPosition(), (double) j) && entityhuman.isInWaterOrRain() // Moved from below
++                    )
++                ),
++                p -> ((net.minecraft.server.level.ServerPlayer) p).getBukkitEntity(),
++                p -> ((org.bukkit.craftbukkit.entity.CraftPlayer) p).getHandle()
++            )
++        );
++        event.callEvent();
++        final List<net.minecraft.server.level.ServerPlayer> list1 = com.google.common.collect.Lists.transform(
++            event.getPlayers(),
++            p -> ((org.bukkit.craftbukkit.entity.CraftPlayer) p).getHandle()
++        );
++        // Paper end - Add BlockSearchPlayersEvent
+ 
+         if (!list1.isEmpty()) {
+             Iterator iterator = list1.iterator();
+@@ -213,7 +233,7 @@ public class ConduitBlockEntity extends BlockEntity {
+             while (iterator.hasNext()) {
+                 Player entityhuman = (Player) iterator.next();
+ 
+-                if (blockposition.closerThan(entityhuman.blockPosition(), (double) j) && entityhuman.isInWaterOrRain()) {
++                if (true || blockposition.closerThan(entityhuman.blockPosition(), (double) j) && entityhuman.isInWaterOrRain()) { // Paper - Add BlockSearchPlayersEvent - moved up to LFL
+                     entityhuman.addEffect(new MobEffectInstance(MobEffects.CONDUIT_POWER, 260, 0, true, true), org.bukkit.event.entity.EntityPotionEffectEvent.Cause.CONDUIT); // CraftBukkit
+                 }
+             }

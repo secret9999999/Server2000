@@ -14722,10 +14722,10 @@ index cea9c098ade00ee87b8efc8164ab72f5279758f0..197224e31175252d8438a8df585bbb65
 +    }
  }
 diff --git a/src/main/java/io/papermc/paper/util/MCUtil.java b/src/main/java/io/papermc/paper/util/MCUtil.java
-index c95a0af32178fe24448a5ae7a229c86ec883e8de..1d6b3fe2ce240af4ede61588795456b046eee6c9 100644
+index 3a0d3a7cd9f3e442e7fe9ddd2c91e5e789411150..98775e869f15bebe83c54dae94ca76a8a4b0ee7d 100644
 --- a/src/main/java/io/papermc/paper/util/MCUtil.java
 +++ b/src/main/java/io/papermc/paper/util/MCUtil.java
-@@ -7,17 +7,30 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
+@@ -10,17 +10,30 @@ import com.mojang.datafixers.types.Func;
  import io.papermc.paper.math.BlockPosition;
  import io.papermc.paper.math.FinePosition;
  import io.papermc.paper.math.Position;
@@ -14756,7 +14756,7 @@ index c95a0af32178fe24448a5ae7a229c86ec883e8de..1d6b3fe2ce240af4ede61588795456b0
  import net.minecraft.world.phys.Vec3;
  import org.apache.commons.lang.exception.ExceptionUtils;
  import com.mojang.authlib.GameProfile;
-@@ -30,8 +43,11 @@ import org.spigotmc.AsyncCatcher;
+@@ -33,8 +46,11 @@ import org.spigotmc.AsyncCatcher;
  
  import javax.annotation.Nonnull;
  import javax.annotation.Nullable;
@@ -14768,7 +14768,7 @@ index c95a0af32178fe24448a5ae7a229c86ec883e8de..1d6b3fe2ce240af4ede61588795456b0
  import java.util.concurrent.CompletableFuture;
  import java.util.concurrent.ExecutionException;
  import java.util.concurrent.LinkedBlockingQueue;
-@@ -532,6 +548,98 @@ public final class MCUtil {
+@@ -536,6 +552,98 @@ public final class MCUtil {
          }
      }
  
