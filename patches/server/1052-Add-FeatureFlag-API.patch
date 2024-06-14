@@ -1,0 +1,407 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Jake Potrebic <jake.m.potrebic@gmail.com>
+Date: Wed, 29 May 2024 19:50:21 -0700
+Subject: [PATCH] Add FeatureFlag API
+
+
+diff --git a/src/main/java/io/papermc/paper/world/flag/PaperFeatureDependent.java b/src/main/java/io/papermc/paper/world/flag/PaperFeatureDependent.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..c6fd2e8a570ac474dd1751929137280c52d79e78
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/world/flag/PaperFeatureDependent.java
+@@ -0,0 +1,17 @@
++package io.papermc.paper.world.flag;
++
++import java.util.Set;
++import net.minecraft.world.flag.FeatureElement;
++import org.bukkit.FeatureFlag;
++import org.checkerframework.checker.nullness.qual.NonNull;
++import org.jetbrains.annotations.Unmodifiable;
++
++public interface PaperFeatureDependent extends FeatureDependant {
++
++    <M extends FeatureElement> M getHandle();
++
++    @Override
++    default @Unmodifiable @NonNull Set<FeatureFlag> requiredFeatures() {
++        return PaperFeatureFlagProviderImpl.fromNms(this.getHandle().requiredFeatures());
++    }
++}
+diff --git a/src/main/java/io/papermc/paper/world/flag/PaperFeatureFlagProviderImpl.java b/src/main/java/io/papermc/paper/world/flag/PaperFeatureFlagProviderImpl.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..705e861662a4023f505539225efddbbb7544189a
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/world/flag/PaperFeatureFlagProviderImpl.java
+@@ -0,0 +1,52 @@
++package io.papermc.paper.world.flag;
++
++import com.google.common.collect.BiMap;
++import com.google.common.collect.ImmutableBiMap;
++import java.util.Collections;
++import java.util.HashSet;
++import java.util.Set;
++import net.minecraft.world.flag.FeatureElement;
++import net.minecraft.world.flag.FeatureFlagSet;
++import net.minecraft.world.flag.FeatureFlags;
++import org.bukkit.FeatureFlag;
++import org.bukkit.craftbukkit.potion.CraftPotionType;
++import org.bukkit.craftbukkit.util.CraftMagicNumbers;
++import org.bukkit.entity.EntityType;
++import org.bukkit.potion.PotionType;
++
++public class PaperFeatureFlagProviderImpl implements FeatureFlagProvider {
++
++    public static final BiMap<FeatureFlag, net.minecraft.world.flag.FeatureFlag> FLAGS = ImmutableBiMap.of(
++        FeatureFlag.VANILLA, FeatureFlags.VANILLA,
++        FeatureFlag.BUNDLE, FeatureFlags.BUNDLE,
++        FeatureFlag.TRADE_REBALANCE, FeatureFlags.TRADE_REBALANCE,
++        FeatureFlag.UPDATE_121, FeatureFlags.UPDATE_1_21
++    );
++
++    @Override
++    public Set<FeatureFlag> requiredFeatures(final FeatureDependant dependant) {
++        final FeatureFlagSet requiredFeatures = getFeatureElement(dependant).requiredFeatures();
++        return fromNms(requiredFeatures);
++    }
++
++    public static Set<FeatureFlag> fromNms(final FeatureFlagSet flagSet) {
++        final Set<FeatureFlag> flags = new HashSet<>();
++        for (final net.minecraft.world.flag.FeatureFlag nmsFlag : FeatureFlags.REGISTRY.names.values()) {
++            if (flagSet.contains(nmsFlag)) {
++                flags.add(FLAGS.inverse().get(nmsFlag));
++            }
++        }
++        return Collections.unmodifiableSet(flags);
++    }
++
++    static FeatureElement getFeatureElement(final FeatureDependant dependant) {
++        if (dependant instanceof final EntityType entityType) {
++            // TODO remove when EntityType is server-backed
++            return CraftMagicNumbers.getEntityTypes(entityType);
++        } else if (dependant instanceof final PotionType potionType) {
++            return CraftPotionType.bukkitToMinecraft(potionType);
++        } else {
++            throw new IllegalArgumentException(dependant + " is not a valid feature dependant");
++        }
++    }
++}
+diff --git a/src/main/java/org/bukkit/craftbukkit/CraftFeatureFlag.java b/src/main/java/org/bukkit/craftbukkit/CraftFeatureFlag.java
+deleted file mode 100644
+index da90e5c84a0cc4505a5fff0ed278a905978c6ce2..0000000000000000000000000000000000000000
+--- a/src/main/java/org/bukkit/craftbukkit/CraftFeatureFlag.java
++++ /dev/null
+@@ -1,51 +0,0 @@
+-package org.bukkit.craftbukkit;
+-
+-import java.util.HashSet;
+-import java.util.Set;
+-import net.minecraft.resources.ResourceLocation;
+-import net.minecraft.world.flag.FeatureFlagSet;
+-import net.minecraft.world.flag.FeatureFlags;
+-import org.bukkit.FeatureFlag;
+-import org.bukkit.NamespacedKey;
+-import org.bukkit.craftbukkit.util.CraftNamespacedKey;
+-import org.jetbrains.annotations.NotNull;
+-
+-public class CraftFeatureFlag implements FeatureFlag {
+-
+-    private final NamespacedKey namespacedKey;
+-    private final net.minecraft.world.flag.FeatureFlag featureFlag;
+-
+-    public CraftFeatureFlag(ResourceLocation minecraftKey, net.minecraft.world.flag.FeatureFlag featureFlag) {
+-        this.namespacedKey = CraftNamespacedKey.fromMinecraft(minecraftKey);
+-        this.featureFlag = featureFlag;
+-    }
+-
+-    public net.minecraft.world.flag.FeatureFlag getHandle() {
+-        return this.featureFlag;
+-    }
+-
+-    @NotNull
+-    @Override
+-    public NamespacedKey getKey() {
+-        return this.namespacedKey;
+-    }
+-
+-    @Override
+-    public String toString() {
+-        return "CraftFeatureFlag{key=" + this.getKey() + ",keyUniverse=" + this.getHandle().universe.toString() + "}";
+-    }
+-
+-    public static Set<CraftFeatureFlag> getFromNMS(FeatureFlagSet featureFlagSet) {
+-        Set<CraftFeatureFlag> set = new HashSet<>();
+-        FeatureFlags.REGISTRY.names.forEach((minecraftkey, featureflag) -> {
+-            if (featureFlagSet.contains(featureflag)) {
+-                set.add(new CraftFeatureFlag(minecraftkey, featureflag));
+-            }
+-        });
+-        return set;
+-    }
+-
+-    public static CraftFeatureFlag getFromNMS(NamespacedKey namespacedKey) {
+-        return FeatureFlags.REGISTRY.names.entrySet().stream().filter(entry -> CraftNamespacedKey.fromMinecraft(entry.getKey()).equals(namespacedKey)).findFirst().map(entry -> new CraftFeatureFlag(entry.getKey(), entry.getValue())).orElse(null);
+-    }
+-}
+diff --git a/src/main/java/org/bukkit/craftbukkit/CraftRegionAccessor.java b/src/main/java/org/bukkit/craftbukkit/CraftRegionAccessor.java
+index 1d16cd01e55f3e5bb8f49ad4c9f777d30180aab5..43a1be50c30b242dfe4af19a916aa92fc593aa18 100644
+--- a/src/main/java/org/bukkit/craftbukkit/CraftRegionAccessor.java
++++ b/src/main/java/org/bukkit/craftbukkit/CraftRegionAccessor.java
+@@ -554,4 +554,11 @@ public abstract class CraftRegionAccessor implements RegionAccessor {
+         return !this.getHandle().noCollision(aabb);
+     }
+     // Paper end
++
++    // Paper start - feature flag API
++    @Override
++    public java.util.Set<org.bukkit.FeatureFlag> getFeatureFlags() {
++        return io.papermc.paper.world.flag.PaperFeatureFlagProviderImpl.fromNms(this.getHandle().enabledFeatures());
++    }
++    // Paper end - feature flag API
+ }
+diff --git a/src/main/java/org/bukkit/craftbukkit/CraftWorld.java b/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
+index f2b20ed5063a293f0b464548f590d652170cd1d8..3d82db6afb56defeeba02c677e630f2b4b0b0d42 100644
+--- a/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
++++ b/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
+@@ -2453,10 +2453,7 @@ public class CraftWorld extends CraftRegionAccessor implements World {
+         return this.persistentDataContainer;
+     }
+ 
+-    @Override
+-    public Set<FeatureFlag> getFeatureFlags() {
+-        return CraftFeatureFlag.getFromNMS(this.getHandle().enabledFeatures()).stream().map(FeatureFlag.class::cast).collect(Collectors.toUnmodifiableSet());
+-    }
++    // Paper - replace feature flag API
+ 
+     public void storeBukkitValues(CompoundTag c) {
+         if (!this.persistentDataContainer.isEmpty()) {
+diff --git a/src/main/java/org/bukkit/craftbukkit/block/CraftBlockType.java b/src/main/java/org/bukkit/craftbukkit/block/CraftBlockType.java
+index 5d3ce8c8cb02c5a61f011adbecd10ae041cbb99b..91f76028045fc295c8ed44932d1c436b6b29ba2e 100644
+--- a/src/main/java/org/bukkit/craftbukkit/block/CraftBlockType.java
++++ b/src/main/java/org/bukkit/craftbukkit/block/CraftBlockType.java
+@@ -31,7 +31,7 @@ import org.bukkit.craftbukkit.util.Handleable;
+ import org.bukkit.inventory.ItemType;
+ import org.jetbrains.annotations.NotNull;
+ 
+-public class CraftBlockType<B extends BlockData> implements BlockType.Typed<B>, Handleable<Block> {
++public class CraftBlockType<B extends BlockData> implements BlockType.Typed<B>, Handleable<Block>, io.papermc.paper.world.flag.PaperFeatureDependent { // Paper - feature flag API
+ 
+     private final NamespacedKey key;
+     private final Block block;
+diff --git a/src/main/java/org/bukkit/craftbukkit/enchantments/CraftEnchantment.java b/src/main/java/org/bukkit/craftbukkit/enchantments/CraftEnchantment.java
+index 067aa761abd023991c884278a5cf0a63684026aa..e9250c1c52e4e7cc3cc2f95fdee3d5f89ec9d012 100644
+--- a/src/main/java/org/bukkit/craftbukkit/enchantments/CraftEnchantment.java
++++ b/src/main/java/org/bukkit/craftbukkit/enchantments/CraftEnchantment.java
+@@ -19,7 +19,7 @@ import org.bukkit.enchantments.EnchantmentTarget;
+ import org.bukkit.enchantments.EnchantmentWrapper;
+ import org.bukkit.inventory.ItemStack;
+ 
+-public class CraftEnchantment extends Enchantment implements Handleable<net.minecraft.world.item.enchantment.Enchantment> {
++public class CraftEnchantment extends Enchantment implements Handleable<net.minecraft.world.item.enchantment.Enchantment>, io.papermc.paper.world.flag.PaperFeatureDependent { // Paper - feature flag API
+ 
+     public static Enchantment minecraftToBukkit(net.minecraft.world.item.enchantment.Enchantment minecraft) {
+         return CraftRegistry.minecraftToBukkit(minecraft, Registries.ENCHANTMENT, Registry.ENCHANTMENT);
+diff --git a/src/main/java/org/bukkit/craftbukkit/generator/CraftWorldInfo.java b/src/main/java/org/bukkit/craftbukkit/generator/CraftWorldInfo.java
+index c81455a4ee9a3185f125ebf8cec325f4ed2e501d..8d962b055bd6574df7eb5510dd0efd67f579d84a 100644
+--- a/src/main/java/org/bukkit/craftbukkit/generator/CraftWorldInfo.java
++++ b/src/main/java/org/bukkit/craftbukkit/generator/CraftWorldInfo.java
+@@ -17,6 +17,7 @@ public class CraftWorldInfo implements WorldInfo {
+     private final long seed;
+     private final int minHeight;
+     private final int maxHeight;
++    private final net.minecraft.world.flag.FeatureFlagSet enabledFeatures; // Paper - feature flag API
+     // Paper start
+     private final net.minecraft.world.level.chunk.ChunkGenerator vanillaChunkGenerator;
+     private final net.minecraft.core.RegistryAccess.Frozen registryAccess;
+@@ -31,6 +32,7 @@ public class CraftWorldInfo implements WorldInfo {
+         this.seed = ((PrimaryLevelData) worldDataServer).worldGenOptions().seed();
+         this.minHeight = dimensionManager.minY();
+         this.maxHeight = dimensionManager.minY() + dimensionManager.height();
++        this.enabledFeatures = worldDataServer.enabledFeatures(); // Paper - feature flag API
+     }
+ 
+     @Override
+@@ -92,4 +94,11 @@ public class CraftWorldInfo implements WorldInfo {
+         };
+     }
+     // Paper end
++
++    // Paper start - feature flag API
++    @Override
++    public java.util.Set<org.bukkit.FeatureFlag> getFeatureFlags() {
++        return io.papermc.paper.world.flag.PaperFeatureFlagProviderImpl.fromNms(this.enabledFeatures);
++    }
++    // Paper end - feature flag API
+ }
+diff --git a/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemType.java b/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemType.java
+index 6bcc3192097dfbf378592fd2437a80dcd0825f13..b7d69f8cf227e54cfdb8dad099e223202dd9e644 100644
+--- a/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemType.java
++++ b/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemType.java
+@@ -34,7 +34,7 @@ import org.bukkit.inventory.meta.ItemMeta;
+ import org.jetbrains.annotations.NotNull;
+ import org.jetbrains.annotations.Nullable;
+ 
+-public class CraftItemType<M extends ItemMeta> implements ItemType.Typed<M>, Handleable<Item> {
++public class CraftItemType<M extends ItemMeta> implements ItemType.Typed<M>, Handleable<Item>, io.papermc.paper.world.flag.PaperFeatureDependent { // Paper - feature flag API
+ 
+     private final NamespacedKey key;
+     private final Item item;
+diff --git a/src/main/java/org/bukkit/craftbukkit/packs/CraftDataPack.java b/src/main/java/org/bukkit/craftbukkit/packs/CraftDataPack.java
+index 9525a7d4602b9b98dcc5e5e60dbcb628a656ae53..a0c0ad832726dcf9c8c25c1cfce2a6ddf770bf0f 100644
+--- a/src/main/java/org/bukkit/craftbukkit/packs/CraftDataPack.java
++++ b/src/main/java/org/bukkit/craftbukkit/packs/CraftDataPack.java
+@@ -11,7 +11,7 @@ import net.minecraft.util.InclusiveRange;
+ import org.bukkit.Bukkit;
+ import org.bukkit.FeatureFlag;
+ import org.bukkit.NamespacedKey;
+-import org.bukkit.craftbukkit.CraftFeatureFlag;
++// import org.bukkit.craftbukkit.CraftFeatureFlag; // Paper - replace feature flag API
+ import org.bukkit.craftbukkit.CraftServer;
+ import org.bukkit.craftbukkit.util.CraftChatMessage;
+ import org.bukkit.packs.DataPack;
+@@ -98,7 +98,7 @@ public class CraftDataPack implements DataPack {
+ 
+     @Override
+     public Set<FeatureFlag> getRequestedFeatures() {
+-        return CraftFeatureFlag.getFromNMS(this.getHandle().getRequestedFeatures()).stream().map(FeatureFlag.class::cast).collect(Collectors.toUnmodifiableSet());
++        return io.papermc.paper.world.flag.PaperFeatureFlagProviderImpl.fromNms(this.getHandle().getRequestedFeatures()); // Paper - replace feature flag API
+     }
+ 
+     @Override
+diff --git a/src/main/java/org/bukkit/craftbukkit/potion/CraftPotionEffectType.java b/src/main/java/org/bukkit/craftbukkit/potion/CraftPotionEffectType.java
+index e15d83ac2668ebb0da9e22c15b9fd902689d5522..20e0c609f4b50cc7d259ad1641d787a0d469e7cb 100644
+--- a/src/main/java/org/bukkit/craftbukkit/potion/CraftPotionEffectType.java
++++ b/src/main/java/org/bukkit/craftbukkit/potion/CraftPotionEffectType.java
+@@ -12,7 +12,7 @@ import org.bukkit.potion.PotionEffect;
+ import org.bukkit.potion.PotionEffectType;
+ import org.jetbrains.annotations.NotNull;
+ 
+-public class CraftPotionEffectType extends PotionEffectType implements Handleable<MobEffect> {
++public class CraftPotionEffectType extends PotionEffectType implements Handleable<MobEffect>, io.papermc.paper.world.flag.PaperFeatureDependent { // Paper - feature flag API
+ 
+     public static PotionEffectType minecraftHolderToBukkit(Holder<MobEffect> minecraft) {
+         return CraftPotionEffectType.minecraftToBukkit(minecraft.value());
+diff --git a/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java b/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java
+index 4788a591f40f506d81b10fd9f6ab68f308a68e23..7935cbbd235217af28e4f4bfbcae9e3538136450 100644
+--- a/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java
++++ b/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java
+@@ -50,7 +50,7 @@ import org.bukkit.attribute.Attribute;
+ import org.bukkit.attribute.AttributeModifier;
+ import org.bukkit.block.data.BlockData;
+ import org.bukkit.craftbukkit.CraftEquipmentSlot;
+-import org.bukkit.craftbukkit.CraftFeatureFlag;
++// import org.bukkit.craftbukkit.CraftFeatureFlag; // Paper
+ import org.bukkit.craftbukkit.CraftRegistry;
+ import org.bukkit.craftbukkit.attribute.CraftAttribute;
+ import org.bukkit.craftbukkit.attribute.CraftAttributeInstance;
+@@ -471,11 +471,7 @@ public final class CraftMagicNumbers implements UnsafeValues {
+         return CraftAttribute.bukkitToMinecraft(attribute).getDescriptionId();
+     }
+ 
+-    @Override
+-    public FeatureFlag getFeatureFlag(NamespacedKey namespacedKey) {
+-        Preconditions.checkArgument(namespacedKey != null, "NamespaceKey cannot be null");
+-        return CraftFeatureFlag.getFromNMS(namespacedKey);
+-    }
++    // Paper - replace feature flag API
+ 
+     @Override
+     public PotionType.InternalPotionData getInternalPotionData(NamespacedKey namespacedKey) {
+diff --git a/src/main/resources/META-INF/services/io.papermc.paper.world.flag.FeatureFlagProvider b/src/main/resources/META-INF/services/io.papermc.paper.world.flag.FeatureFlagProvider
+new file mode 100644
+index 0000000000000000000000000000000000000000..c3e6b96013f6dd0b784bd867196552d97f3d8685
+--- /dev/null
++++ b/src/main/resources/META-INF/services/io.papermc.paper.world.flag.FeatureFlagProvider
+@@ -0,0 +1 @@
++io.papermc.paper.world.flag.PaperFeatureFlagProviderImpl
+diff --git a/src/main/resources/META-INF/services/io.papermc.paper.world.flag.FeatureFlags$FeatureFlagProvider b/src/main/resources/META-INF/services/io.papermc.paper.world.flag.FeatureFlags$FeatureFlagProvider
+new file mode 100644
+index 0000000000000000000000000000000000000000..c3e6b96013f6dd0b784bd867196552d97f3d8685
+--- /dev/null
++++ b/src/main/resources/META-INF/services/io.papermc.paper.world.flag.FeatureFlags$FeatureFlagProvider
+@@ -0,0 +1 @@
++io.papermc.paper.world.flag.PaperFeatureFlagProviderImpl
+diff --git a/src/test/java/io/papermc/paper/world/flag/FeatureFlagTest.java b/src/test/java/io/papermc/paper/world/flag/FeatureFlagTest.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..d355fc795129ea3b6021e82b542dc12ef1139d04
+--- /dev/null
++++ b/src/test/java/io/papermc/paper/world/flag/FeatureFlagTest.java
+@@ -0,0 +1,79 @@
++package io.papermc.paper.world.flag;
++
++import io.papermc.paper.adventure.PaperAdventure;
++import io.papermc.paper.registry.PaperRegistries;
++import io.papermc.paper.registry.RegistryAccess;
++import io.papermc.paper.registry.RegistryKey;
++import java.util.HashSet;
++import java.util.Set;
++import net.kyori.adventure.key.Key;
++import net.minecraft.core.registries.Registries;
++import net.minecraft.resources.ResourceKey;
++import net.minecraft.resources.ResourceLocation;
++import net.minecraft.world.flag.FeatureElement;
++import net.minecraft.world.flag.FeatureFlagSet;
++import net.minecraft.world.flag.FeatureFlags;
++import org.bukkit.FeatureFlag;
++import org.bukkit.Keyed;
++import org.bukkit.support.AbstractTestingBase;
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.params.ParameterizedTest;
++import org.junit.jupiter.params.provider.MethodSource;
++
++import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
++import static org.junit.jupiter.api.Assertions.assertEquals;
++import static org.junit.jupiter.api.Assertions.assertInstanceOf;
++import static org.junit.jupiter.api.Assertions.assertNotNull;
++import static org.junit.jupiter.api.Assertions.fail;
++
++class FeatureFlagTest extends AbstractTestingBase {
++
++    @Test
++    void testFeatureFlagParity() {
++        final Set<ResourceLocation> locations = new HashSet<>();
++        for (final FeatureFlag flag : FeatureFlag.ALL_FLAGS.values()) {
++            locations.add(PaperAdventure.asVanilla(flag.getKey()));
++        }
++        FeatureFlags.REGISTRY.fromNames(locations, unknown -> {
++            fail("Unknown api feature flag: " + unknown);
++        });
++
++        for (final ResourceLocation nmsFlag : allNames()) {
++            assertNotNull(FeatureFlag.ALL_FLAGS.get(Key.key(nmsFlag.toString())), "can't find api flag for " + nmsFlag);
++        }
++    }
++
++    @Test
++    void testFeatureFlagConversion() {
++        assertEquals(allNames().size(), PaperFeatureFlagProviderImpl.FLAGS.size());
++        for (final FeatureFlag featureFlag : PaperFeatureFlagProviderImpl.FLAGS.keySet()) {
++            final net.minecraft.world.flag.FeatureFlag nmsFlag = PaperFeatureFlagProviderImpl.FLAGS.get(featureFlag);
++            final ResourceLocation nmsFlagName = FeatureFlags.REGISTRY.toNames(FeatureFlagSet.of(nmsFlag)).iterator().next();
++            assertEquals(nmsFlagName.toString(), featureFlag.key().asString());
++        }
++    }
++
++    static Set<ResourceLocation> allNames() {
++        return FeatureFlags.REGISTRY.toNames(FeatureFlags.REGISTRY.allFlags());
++    }
++
++    @SuppressWarnings({"rawtypes", "unchecked"})
++    static Set<RegistryKey<?>> featureFilteredRegistries() {
++        final Set<RegistryKey<?>> registryKeys = new HashSet<>();
++        for (final ResourceKey filteredRegistry : FeatureElement.FILTERED_REGISTRIES) {
++            if (filteredRegistry == Registries.MENU) continue; // not applicable atm
++            registryKeys.add(PaperRegistries.fromNms(filteredRegistry));
++        }
++        return registryKeys;
++    }
++
++    @MethodSource("featureFilteredRegistries")
++    @ParameterizedTest
++    <T extends Keyed> void testFeatureDependent(final RegistryKey<T> registryKey) {
++        final org.bukkit.Registry<T> registry = RegistryAccess.registryAccess().getRegistry(registryKey);
++        final T anyElement = registry.iterator().next();
++        assertInstanceOf(FeatureDependant.class, anyElement, "Registry " + registryKey + " doesn't have feature dependent elements");
++        final FeatureDependant dependant = ((FeatureDependant) anyElement);
++        assertDoesNotThrow(dependant::requiredFeatures, "Failed to get required features for " + anyElement + " in " + registryKey);
++    }
++}
