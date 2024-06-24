@@ -17,6 +17,7 @@ import static net.kyori.adventure.text.Component.text;
 public final class TestPlugin extends JavaPlugin implements Listener {
 
     final NamespacedKey key = new NamespacedKey(this, "test");
+    final NamespacedKey shapelessTest = new NamespacedKey(this, "shapeless_test");
     final ItemStack ingredient = new ItemStack(Material.STICK);
     {
         this.ingredient.editMeta(meta -> {
@@ -35,15 +36,23 @@ public final class TestPlugin extends JavaPlugin implements Listener {
         });
         final ShapelessRecipe recipe = new ShapelessRecipe(this.key, result);
         recipe.addIngredient(Material.BRICK);
+        recipe.addIngredient(Material.STICK);
 
         recipe.addIngredient(new RecipeChoice.ExactChoice(this.ingredient));
         this.getServer().addRecipe(recipe);
+
+
+        final ShapelessRecipe test = new ShapelessRecipe(this.shapelessTest, new ItemStack(Material.DIAMOND));
+        test.addIngredient(Material.STICK);
+        test.addIngredient(Material.STICK);
+        this.getServer().addRecipe(test);
         // io.papermc.testplugin.brigtests.Registration.registerViaOnEnable(this);
     }
 
     @EventHandler
     public void event(PlayerJoinEvent event) {
         event.getPlayer().discoverRecipe(this.key);
+        event.getPlayer().discoverRecipe(this.shapelessTest);
     }
 
     @EventHandler
