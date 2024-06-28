@@ -20,6 +20,19 @@ index 69a661f01e43d17262fd2845dde5528416bbe456..c0062c8f83641ff30e79a309c0bb9930
      }
  
      @Nullable
+diff --git a/src/main/java/net/minecraft/world/entity/OminousItemSpawner.java b/src/main/java/net/minecraft/world/entity/OminousItemSpawner.java
+index 146cbec9e64b6c77759aadd0d0c4e989018e9aef..4c4545b3732d4c08afdb7bc1913169a96e82825c 100644
+--- a/src/main/java/net/minecraft/world/entity/OminousItemSpawner.java
++++ b/src/main/java/net/minecraft/world/entity/OminousItemSpawner.java
+@@ -89,7 +89,7 @@ public class OminousItemSpawner extends Entity {
+                 entity = new ItemEntity(level, this.getX(), this.getY(), this.getZ(), itemStack);
+             }
+ 
+-            level.addFreshEntity(entity);
++            level.addFreshEntity(entity, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.OMINOUS_ITEM_SPAWNER); // Paper - Fixes and additions to the SpawnReason API
+             level.levelEvent(3021, this.blockPosition(), 1);
+             level.gameEvent(entity, GameEvent.ENTITY_PLACE, this.position());
+             this.setItem(ItemStack.EMPTY);
 diff --git a/src/main/java/net/minecraft/world/entity/projectile/DragonFireball.java b/src/main/java/net/minecraft/world/entity/projectile/DragonFireball.java
 index 1dade7a4fbdf190661e4431496349444467509cc..3e869620db35d38db39fbeed715b898ef9d2743c 100644
 --- a/src/main/java/net/minecraft/world/entity/projectile/DragonFireball.java
