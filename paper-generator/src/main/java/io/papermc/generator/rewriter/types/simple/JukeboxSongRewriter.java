@@ -49,7 +49,7 @@ public class JukeboxSongRewriter extends RegistryFieldRewriter<JukeboxSong> {
     protected String rewriteFieldName(Holder.Reference<JukeboxSong> reference) {
         String keyedName = super.rewriteFieldName(reference);
         if (!SourceVersion.isIdentifier(keyedName)) {
-            // fallback to field names (happens for 5, 11, 13 etc.)
+            // fallback to field names for invalid identifier (happens for 5, 11, 13 etc.)
             return FALLBACK_NAMES.get(reference.key());
         }
         return keyedName;
